@@ -6,10 +6,11 @@ Roberto maestre - rmaestre@gmail.com
 Bojan Mihaljevic - boki.mihaljevic@gmail.com
 """
 from __future__ import division
-from numpy  import array, shape, where, in1d
+from numpy import array, shape, where, in1d
 import math
 import time
 import nose
+
 
 class InformationTheoryTool:
     
@@ -23,39 +24,38 @@ class InformationTheoryTool:
         self.n_rows = data.shape[0]
         self.n_cols = data.shape[1]
         
-    def single_entropy(self, x_index, log_base, debug = False):
+    def single_entropy(self, x_index, log_base, debug=False):
         """
         Calculate the entropy of a random variable
         """
         # Check if index are into the bounds
-        assert (x_index >= 0 and x_index <= self.n_rows)
+        assert(0 <= x_index <= self.n_rows)
         # Variable to return entropy
         summation = 0.0
         # Get uniques values of random variables
         values_x = set(self.data[x_index])
         # Print debug info
         if debug:
-            print 'Entropy of'
-            print self.data[x_index]
+            print('Entropy of')
+            print(self.data[x_index])
         # For each random
         for value_x in values_x:
-            px = shape(where(self.data[x_index]==value_x))[1] / self.n_cols
+            px = shape(where(self.data[x_index] == value_x))[1] / self.n_cols
             if px > 0.0:
                 summation += px * math.log(px, log_base)
             if debug:
-                print '(%d) px:%f' % (value_x, px)
+                print('(%d) px:%f' % (value_x, px))
         if summation == 0.0:
             return summation
         else:
             return - summation
-        
-        
-    def entropy(self, x_index, y_index, log_base, debug = False):
+
+    def entropy(self, x_index, y_index, log_base, debug=False):
         """
         Calculate the entropy between two random variable
         """
-        assert (x_index >= 0 and x_index <= self.n_rows)
-        assert (y_index >= 0 and y_index <= self.n_rows)
+        assert(0 <= x_index <= self.n_rows)
+        assert(0 <= y_index <= self.n_rows)
         # Variable to return MI
         summation = 0.0
         # Get uniques values of random variables
@@ -63,32 +63,30 @@ class InformationTheoryTool:
         values_y = set(self.data[y_index])
         # Print debug info
         if debug:
-            print 'Entropy between'
-            print self.data[x_index]
-            print self.data[y_index]
+            print('Entropy between')
+            print(self.data[x_index])
+            print(self.data[y_index])
         # For each random
         for value_x in values_x:
             for value_y in values_y:
-                pxy = len(where(in1d(where(self.data[x_index]==value_x)[0], 
-                                where(self.data[y_index]==value_y)[0])==True)[0]) / self.n_cols
+                pxy = len(where(in1d(where(self.data[x_index] == value_x)[0],
+                                where(self.data[y_index] == value_y)[0]) == True)[0]) / self.n_cols
                 if pxy > 0.0:
                     summation += pxy * math.log(pxy, log_base)
                 if debug:
-                    print '(%d,%d) pxy:%f' % (value_x, value_y, pxy)
+                    print('(%d,%d) pxy:%f' % (value_x, value_y, pxy))
         if summation == 0.0:
             return summation
         else:
             return - summation
         
-        
-        
-    def mutual_information(self, x_index, y_index, log_base=2, debug = False):
+    def mutual_information(self, x_index, y_index, log_base=2, debug=False):
         """
         Calculate and return Mutual information between two random variables
         """
         # Check if index are into the bounds
-        assert (x_index >= 0 and x_index <= self.n_rows)
-        assert (y_index >= 0 and y_index <= self.n_rows)
+        assert(0 <= x_index <= self.n_rows)
+        assert(0 <= y_index <= self.n_rows)
         # Variable to return MI
         summation = 0.0
         # Get uniques values of random variables
@@ -96,55 +94,67 @@ class InformationTheoryTool:
         values_y = set(self.data[y_index])
         # Print debug info
         if debug:
-            print 'MI between'
-            print self.data[x_index]
-            print self.data[y_index]
+            print('MI between')
+            print(self.data[x_index])
+            print(self.data[y_index])
         # For each random
         for value_x in values_x:
             for value_y in values_y:
-                px = shape(where(self.data[x_index]==value_x))[1] / self.n_cols
-                py = shape(where(self.data[y_index]==value_y))[1] / self.n_cols
-                pxy = len(where(in1d(where(self.data[x_index]==value_x)[0], 
-                                where(self.data[y_index]==value_y)[0])==True)[0]) / self.n_cols
+                px = shape(where(self.data[x_index] == value_x))[1] / self.n_cols
+                py = shape(where(self.data[y_index] == value_y))[1] / self.n_cols
+                pxy = len(where(in1d(where(self.data[x_index] == value_x)[0],
+                                where(self.data[y_index] == value_y)[0]) == True)[0]) / self.n_cols
                 if pxy > 0.0:
                     summation += pxy * math.log((pxy / (px*py)), log_base)
                 if debug:
-                    print '(%d,%d) px:%f py:%f pxy:%f' % (value_x, value_y, px, py, pxy)
+                    print('(%d,%d) px:%f py:%f pxy:%f' % (value_x, value_y, px, py, pxy))
         return summation
 
-#Continuous mutual information in Python
+
+# Continuous mutual information in Python
 import math
 from scipy.stats import gaussian_kde
 from scipy.integrate import dblquad
 
 # Constants
 MIN_DOUBLE = 4.9406564584124654e-324 
-                    # The minimum size of a Float64; used here to prevent the
-                    #  logarithmic function from hitting its undefined region
-                    #  at its asymptote of 0.
+# The minimum size of a Float64; used here to prevent the
+#  logarithmic function from hitting its undefined region
+#  at its asymptote of 0.
 INF = float('inf')  # The floating-point representation for "infinity"
 
 # x and y are previously defined as collections of 
 # floating point values with the same length
 
 from math import log
-def log2(n):  return log(n)*1.0/log(2)
-def log10(n):  return log(n)*1.0/log(10)
+
+
+def log2(n): return log(n)*1.0/log(2)
+
+
+def log10(n): return log(n)*1.0/log(10)
+
 
 # Kernel estimation
-def mutinfo2(x,y):
+def mutinfo2(x, y):
     gkde_x = gaussian_kde(x)
     gkde_y = gaussian_kde(y)
 
-    gkde_xy = gaussian_kde([x,y])
-    mutual_info = lambda a,b: gkde_xy([a,b]) * math.log((gkde_xy([a,b]) / (gkde_x(a) * gkde_y(b))) + MIN_DOUBLE)
+    gkde_xy = gaussian_kde([x, y])
+
+    def mutual_info(a, b):
+        return gkde_xy([a, b]) * math.log((gkde_xy([a, b]) / (gkde_x(a) * gkde_y(b))) + MIN_DOUBLE)
 
     # Compute MI(X,Y)
     (minfo_xy, err_xy) = dblquad(mutual_info, -INF, INF, lambda a: 0, lambda a: INF)
 
-    print 'minfo_xy = ', minfo_xy
-    mutual_info = lambda a,b: gkde_xy([a,b]) * math.log((gkde_xy([a,b]) / ((gkde_x(a) * gkde_y(b)) + MIN_DOUBLE)) + MIN_DOUBLE)
+    print('minfo_xy = ', minfo_xy)
+
+    def mutual_info(a, b):
+        return gkde_xy([a, b]) * math.log((gkde_xy([a, b]) / ((gkde_x(a) * gkde_y(b)) + MIN_DOUBLE)) + MIN_DOUBLE)
+
     return mutual_info
+
 
 """
 
@@ -162,18 +172,18 @@ it_tool = InformationTheoryTool(data)
 
 # entropy of  X_1 (3, 4, 5, 5, 3, 2, 2, 6, 6, 1)
 t_start = time.time()
-print 'Entropy(X_1): %f' % it_tool.single_entropy(1, 10, False)
-print 'Elapsed time: %f\n' % (time.time() - t_start)
+print('Entropy(X_1): %f' % it_tool.single_entropy(1, 10, False))
+print('Elapsed time: %f\n' % (time.time() - t_start))
 
 # entropy of  X_3 (7, 7, 7, 7, 7, 7, 7, 7, 7, 7)
 t_start = time.time()
-print 'Entropy(X_3): %f' % it_tool.single_entropy(3, 10)
-print 'Elapsed time: %f\n' % (time.time() - t_start)
+print('Entropy(X_3): %f' % it_tool.single_entropy(3, 10))
+print('Elapsed time: %f\n' % (time.time() - t_start))
 
 # entropy of  X_4 (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
 t_start = time.time()
-print 'Entropy(X_4): %f' % it_tool.single_entropy(4, 10)
-print 'Elapsed time: %f\n' % (time.time() - t_start)
+print('Entropy(X_4): %f' % it_tool.single_entropy(4, 10))
+print('Elapsed time: %f\n' % (time.time() - t_start))
 
 
 
@@ -181,13 +191,13 @@ print 'Elapsed time: %f\n' % (time.time() - t_start)
 
 # entropy of  X_0 (0, 0, 1, 1, 0, 1, 1, 2, 2, 2) and X_1 (3, 4, 5, 5, 3, 2, 2, 6, 6, 1)
 t_start = time.time()
-print 'Entropy(X_0, X_1): %f' % it_tool.entropy(0, 1, 10)
-print 'Elapsed time: %f\n' % (time.time() - t_start)
+print('Entropy(X_0, X_1): %f' % it_tool.entropy(0, 1, 10))
+print('Elapsed time: %f\n' % (time.time() - t_start))
 
 # entropy of  X_3 (7, 7, 7, 7, 7, 7, 7, 7, 7, 7) and X_3 (7, 7, 7, 7, 7, 7, 7, 7, 7, 7)
 t_start = time.time()
-print 'Entropy(X_3, X_3): %f' % it_tool.entropy(3, 3, 10)
-print 'Elapsed time: %f\n' % (time.time() - t_start)
+print('Entropy(X_3, X_3): %f' % it_tool.entropy(3, 3, 10))
+print('Elapsed time: %f\n' % (time.time() - t_start))
 
 
 
@@ -195,13 +205,13 @@ print 'Elapsed time: %f\n' % (time.time() - t_start)
 
 # Print mutual information between X_0 (0,0,1,1,0,1,1,2,2,2) and X_1 (3,4,5,5,3,2,2,6,6,1)
 t_start = time.time()
-print 'MI(X_0, X_1): %f' % it_tool.mutual_information(0, 1, 10)
-print 'Elapsed time: %f\n' % (time.time() - t_start)
+print('MI(X_0, X_1): %f' % it_tool.mutual_information(0, 1, 10))
+print('Elapsed time: %f\n' % (time.time() - t_start))
 
 # Print mutual information between X_1 (3,4,5,5,3,2,2,6,6,1) and X_2 (7,2,1,3,2,8,9,1,2,0)
 t_start = time.time()
-print 'MI(X_1, X_2): %f' % it_tool.mutual_information(1, 2, 10)
-print 'Elapsed time: %f\n' % (time.time() - t_start)
+print('MI(X_1, X_2): %f' % it_tool.mutual_information(1, 2, 10))
+print('Elapsed time: %f\n' % (time.time() - t_start))
 
 
 

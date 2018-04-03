@@ -1,15 +1,21 @@
 import sys
 import time
-import pymc
-import numpy        as np
+
+if (sys.version_info > (3, 0)):
+    import pymc3 as pymc
+else:
+    import pymc
+
+import numpy as np
 import numpy.random as npr
 import scipy.linalg as spla
-import scipy.stats  as sps
-import pylab        as pl
+import scipy.stats as sps
+import pylab as pl
 
 from data import *
 from mcmc import *
 from util import *
+
 
 class ProbitSS:
 
@@ -50,27 +56,27 @@ class ProbitSS:
 
         self.X = X
         self.Y = Y
-        self.R = R # Absolute value?
+        self.R = R  # Absolute value?
 
         self.N = self.X.shape[0]
         self.P = self.X.shape[1]
 
         self.gamma0_m = sps.norm.ppf(1.0 - target_sparsity)
         self.gamma0_v = gamma0_v
-        self.lamb_a   = lamb_a
-        self.lamb_b   = lamb_b
-        self.nu_a     = nu_a
-        self.nu_b     = nu_b
-        self.xi_a     = xi_a
-        self.xi_b     = xi_b
+        self.lamb_a = lamb_a
+        self.lamb_b = lamb_b
+        self.nu_a = nu_a
+        self.nu_b = nu_b
+        self.xi_a = xi_a
+        self.xi_b = xi_b
 
-        self.sample_xi    = sample_xi
+        self.sample_xi = sample_xi
         self.check_finite = check_finite
 
         # Initialize scalar model parameters to their prior means.
         self.gamma0 = self.gamma0_m
-        self.lamb   = self.lamb_a/self.lamb_b
-        self.nu     = self.nu_a/self.nu_b
+        self.lamb = self.lamb_a/self.lamb_b
+        self.nu = self.nu_a/self.nu_b
 
         if self.sample_xi:
             self.xi = self.xi_a/(self.xi_a + self.xi_b)
@@ -95,7 +101,7 @@ class ProbitSS:
 
         # Add jitter and renormalize.
         self.R = self.R + jitter*np.eye(self.R.shape[0])
-        diagR  = np.diag(self.R)[:,np.newaxis]
+        diagR = np.diag(self.R)[:, np.newaxis]
         self.R = self.R / np.sqrt(diagR * diagR.T)
 
     def xi_adjusted(self, xi):
@@ -143,57 +149,67 @@ class ProbitSS:
                     # Otherwise, we can still save the masking of the input.
                     masked_X = self._last_masked_X
             else:
-                masked_X = self.X[:,mask]
+                masked_X = self.X[:, mask]
                 self._last_masked_X = masked_X
 
             if chol_cov is None:
-                covar    = (np.dot(masked_X, masked_X.T) + np.ones((self.N, self.N)))/lamb + np.eye(self.N)
+                covar = (np.dot(masked_X, masked_X.T) + np.ones((self.N, self.N)))/lamb + np.eye(self.N)
                 chol_cov = spla.cholesky(covar, lower=True, check_finite=self.check_finite)
                 self._last_chol_cov = chol_cov
 
-            solve = spla.solve_triangular(chol_cov/np.sqrt(nu), self.Y, lower=True, trans=0, check_finite=self.check_finite)
+            solve = spla.solve_triangular(
+                chol_cov/np.sqrt(nu),
+                self.Y,
+                lower=True,
+                trans=0,
+                check_finite=self.check_finite
+            )
                 
             self._log_marg_like = -0.5*self.N*np.log(2*np.pi/nu) - np.sum(np.log(np.diag(chol_cov))) - 0.5*np.dot(solve.T, solve)
             self._last_chol_cov = chol_cov
-            self._last_mask     = mask
-            self._last_nu       = nu
-            self._last_lamb     = lamb
+            self._last_mask = mask
+            self._last_nu = nu
+            self._last_lamb = lamb
 
             return self._log_marg_like
 
         except AttributeError:
             self._last_mask = np.zeros(gamma.shape) + np.nan
-            self._last_nu   = -1
+            self._last_nu = -1
             self._last_lamb = -1
             return self.log_marg_like(gamma, gamma0, nu, lamb)
 
     def log_joint(self):
 
-        log_marg_like  = self.log_marg_like(self.gamma, self.gamma0, self.nu, self.lamb)
+        log_marg_like = self.log_marg_like(self.gamma, self.gamma0, self.nu, self.lamb)
         log_gam0_prior = self.log_gamma0_prior(self.gamma0)
-        log_nu_prior   = self.log_nu_prior(self.nu)
+        log_nu_prior = self.log_nu_prior(self.nu)
         log_lamb_prior = self.log_lambda_prior(self.lamb)
-        log_gam_prior  = self.log_gamma_prior(self.gamma)
+        log_gam_prior = self.log_gamma_prior(self.gamma)
 
         if self.sample_xi:
-            log_xi_prior   = self.log_xi_prior(self.xi)
+            log_xi_prior = self.log_xi_prior(self.xi)
         else:
             log_xi_prior = 0.0
 
-        #print log_marg_like, log_gam0_prior, log_nu_prior, log_lamb_prior, log_gam_prior, log_xi_prior
+        # print(log_marg_like, log_gam0_prior, log_nu_prior, log_lamb_prior, log_gam_prior, log_xi_prior)
 
         return log_marg_like + log_gam0_prior + log_nu_prior + log_lamb_prior + log_gam_prior + log_xi_prior
 
     def run_mcmc(self, iters=1000, burnin=100, post_trace=False):
         
-        logpost_trace   = np.zeros(iters)
+        logpost_trace = np.zeros(iters)
         inclusion_trace = np.zeros((iters, self.P), dtype=bool)
 
-        for iter in xrange(-burnin, iters):
+        for iter in range(-burnin, iters):
 
             log_post = self.log_joint()
 
-            sys.stderr.write('%05d / %05d] logprob: %f [gamma0:%f lambda:%f nu:%f xi:%f\n' % (iter, iters, log_post, self.gamma0, self.lamb, self.nu, self.xi))
+            sys.stderr.write(
+                '%05d / %05d] logprob: %f [gamma0:%f lambda:%f nu:%f xi:%f\n' % (
+                    iter, iters, log_post, self.gamma0, self.lamb, self.nu, self.xi
+                )
+            )
 
             self.update_gamma()
             self.update_gamma0()
@@ -204,23 +220,23 @@ class ProbitSS:
 
             if iter >= 0:
                 # Record things.
-                inclusion_trace[iter,:] = self.gamma > self.gamma0
+                inclusion_trace[iter, :] = self.gamma > self.gamma0
                 logpost_trace[iter] = log_post
 
         if post_trace:
             return logpost_trace
         else:
-            return np.mean(inclusion_trace, 0), inclusion_trace[np.argmax(logpost_trace),:]
+            return np.mean(inclusion_trace, 0), inclusion_trace[np.argmax(logpost_trace), :]
 
     def run_geweke(self, iters=1000, burnin=100):
-        gamma0_trace  = np.zeros(iters)
-        lambda_trace  = np.zeros(iters)
-        nu_trace      = np.zeros(iters)
-        xi_trace      = np.zeros(iters)
+        gamma0_trace = np.zeros(iters)
+        lambda_trace = np.zeros(iters)
+        nu_trace = np.zeros(iters)
+        xi_trace = np.zeros(iters)
         logpost_trace = np.zeros(iters)
         loglike_trace = np.zeros(iters)
 
-        for iter in xrange(-burnin, iters):
+        for iter in range(-burnin, iters):
             log_post = self.log_joint()
             log_like = self.log_marg_like(self.gamma, self.gamma0, self.nu, self.lamb)
 
@@ -234,45 +250,45 @@ class ProbitSS:
             self.update_data()
 
             if iter >= 0:
-                gamma0_trace[iter]  = self.gamma0
-                lambda_trace[iter]  = self.lamb
-                nu_trace[iter]      = self.nu
-                xi_trace[iter]      = self.xi
+                gamma0_trace[iter] = self.gamma0
+                lambda_trace[iter] = self.lamb
+                nu_trace[iter] = self.nu
+                xi_trace[iter] = self.xi
                 logpost_trace[iter] = log_post
                 loglike_trace[iter] = log_like
 
         import pylab as pl
         pl.figure(1)
-        pl.subplot(2,2,1)
+        pl.subplot(2, 2, 1)
         pl.hist(gamma0_trace, 25, normed=1)
         gx = np.linspace(-5, 5, 1000)
         pl.plot(gx, np.exp(self.log_gamma0_prior(gx)))
         pl.title('gamma0')
 
-        pl.subplot(2,2,2)
+        pl.subplot(2, 2, 2)
         pl.hist(lambda_trace, 25, normed=1)
         gx = np.linspace(1e-6, 10, 1000)
         pl.plot(gx, np.exp(self.log_lambda_prior(gx)))
         pl.title('lambda')
 
-        pl.subplot(2,2,3)
+        pl.subplot(2, 2, 3)
         pl.hist(nu_trace, 25, normed=1)
         gx = np.linspace(1e-6, 10, 1000)
         pl.plot(gx, np.exp(self.log_nu_prior(gx)))
         pl.title('nu')
 
-        pl.subplot(2,2,4)
+        pl.subplot(2, 2, 4)
         pl.hist(xi_trace, 25, normed=1)
         gx = np.linspace(1e-6, 1-1e-6, 1000)
         pl.plot(gx, np.exp(self.log_xi_prior(gx)))
         pl.title('xi')
 
         pl.figure(2)
-        pl.subplot(2,1,1)
+        pl.subplot(2, 1, 1)
         pl.plot(logpost_trace)
         pl.title('log posterior')
 
-        pl.subplot(2,1,2)
+        pl.subplot(2, 1, 2)
         pl.plot(loglike_trace)
         pl.title('log marginal likelihood')
 
@@ -285,7 +301,8 @@ class ProbitSS:
         """
         
         # Construct the log likelihood for elliptical slice sampling.
-        slice_fn = lambda gamma: self.log_marg_like(gamma, self.gamma0, self.nu, self.lamb)
+        def slice_fn(gamma):
+            return self.log_marg_like(gamma, self.gamma0, self.nu, self.lamb)
 
         self.gamma = elliptical_slice(self.gamma, self.get_cholesky(), slice_fn)
 
@@ -324,8 +341,8 @@ class ProbitSS:
         Apply MCMC transition operator to the sparsity threshold.
         """
 
-        slice_fn = lambda gamma0: (self.log_marg_like(self.gamma, gamma0, self.nu, self.lamb)
-                                   + self.log_gamma0_prior(gamma0))
+        def slice_fn(gamma0):
+            return self.log_marg_like(self.gamma, gamma0, self.nu, self.lamb) + self.log_gamma0_prior(gamma0)
 
         self.gamma0 = slice_sample(self.gamma0, slice_fn, step_out=True)
 
@@ -336,7 +353,13 @@ class ProbitSS:
 
         if True:
             # Compute the latent whitened variables.
-            whitened = spla.solve_triangular(self.get_cholesky(), self.gamma, lower=True, trans=0, check_finite=self.check_finite)
+            whitened = spla.solve_triangular(
+                self.get_cholesky(),
+                self.gamma,
+                lower=True,
+                trans=0,
+                check_finite=self.check_finite
+            )
 
             # Construct the slice sampling function.
             def slice_fn(xi):
@@ -350,23 +373,28 @@ class ProbitSS:
 
                 gamma = np.dot(chol_cov, whitened)
 
-                return (self.log_marg_like(gamma, self.gamma0, self.nu, self.lamb) + self.log_xi_prior(xi))            
+                return self.log_marg_like(gamma, self.gamma0, self.nu, self.lamb) + self.log_xi_prior(xi)
 
-            self.xi    = slice_sample(self.xi, slice_fn)
+            self.xi = slice_sample(self.xi, slice_fn)
             self.gamma = np.dot(self.get_cholesky(), whitened)
 
         else:
-        # This is the slow way.  Murray and Adams, NIPS 2010 is better.
+            # This is the slow way.  Murray and Adams, NIPS 2010 is better.
             def slice_fn(xi):
                 if xi <= 0 or xi >= 1:
                     return -np.inf
                 try:
                     covmat = self.xi_adjusted(xi)
                     chol_cov = spla.cholesky(covmat, lower=True, check_finite=self.check_finite)
-                    solve = spla.solve_triangular(chol_cov, self.gamma, lower=True, trans=0, check_finite=self.check_finite)
-                    return (-0.5*self.P*np.log(2*np.pi) - np.sum(np.log(np.diag(chol_cov))) - 0.5*np.dot(solve.T, solve)
-                             + self.log_xi_prior(xi))
-                except np.linalg.linalg.LinAlgError as err:
+                    solve = spla.solve_triangular(
+                        chol_cov,
+                        self.gamma,
+                        lower=True,
+                        trans=0,
+                        check_finite=self.check_finite
+                    )
+                    return -0.5*self.P*np.log(2*np.pi) - np.sum(np.log(np.diag(chol_cov))) - 0.5*np.dot(solve.T, solve) + self.log_xi_prior(xi)
+                except np.linalg.linalg.LinAlgError:
                     return -np.inf
 
             self.xi = uni_slice_sample(self.xi, slice_fn, 0, 1)
@@ -379,7 +407,7 @@ class ProbitSS:
         # We can use intermediate results from the marginal likelihood.
         self.log_marg_like(self.gamma, self.gamma0, self.nu, self.lamb)
         chol_cov = self._last_chol_cov/np.sqrt(self.nu)
-        self.Y   = np.dot(chol_cov, npr.randn(self.N))
+        self.Y = np.dot(chol_cov, npr.randn(self.N))
 
     def log_lambda_prior(self, lamb):
         """
@@ -397,7 +425,7 @@ class ProbitSS:
         """
         Log density of Gaussian prior on sparsity threshold.
         """
-        return -0.5*( np.log(2*np.pi) + np.log(self.gamma0_v) + ((gamma0-self.gamma0_m)**2)/self.gamma0_v)
+        return -0.5*(np.log(2*np.pi) + np.log(self.gamma0_v) + ((gamma0-self.gamma0_m)**2)/self.gamma0_v)
 
     def log_gamma_prior(self, gamma):
         """
@@ -412,17 +440,18 @@ class ProbitSS:
         """
         return betapdfln(xi, self.xi_a, self.xi_b)
 
+
 if __name__ == '__main__':
     npr.seed(1)
 
     data_dir = 'data/small_eQTL'
-    prefix   = 'sim96'
-    sys.stderr.write("Performing test with file %s.\n" % (prefix))
+    prefix = 'sim96'
+    sys.stderr.write("Performing test with file %s.\n" % prefix)
 
     (genos, phenos, eqtls, corr) = load_data(data_dir, prefix)
 
     trunc = 5
-    genos = genos[:trunc,:]
+    genos = genos[:trunc, :]
     phenos = phenos[:trunc]
 
     model = ProbitSS(genos, phenos, corr, check_finite=False,
@@ -436,7 +465,7 @@ if __name__ == '__main__':
         t_start = time.time()
         logpost_trace = model.run_mcmc(burnin=500, iters=1000, post_trace=True)
         t_end = time.time()
-        print t_end-t_start
+        print(t_end-t_start)
 
         pl.plot(logpost_trace)
         pl.show()
@@ -451,5 +480,5 @@ if __name__ == '__main__':
 
         model.run_geweke(burnin=500, iters=10000)
 
-    #inclusion_probs = model.run_mcmc(burnin=0, iters=100)
-    #print np.vstack([inclusion_probs, eqtls]).T
+    # inclusion_probs = model.run_mcmc(burnin=0, iters=100)
+    # print(np.vstack([inclusion_probs, eqtls]).T)

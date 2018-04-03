@@ -1,0 +1,10 @@
+real_eval:
+  # set null for no seed
+  np.seed: 1
+  workers: 4
+  dims: 10000
+  burnin: 50
+  iterations: 100
+  directory: data/sim
+  # each filePrefix specified below (comma separated) is handled in parallel
+  filePrefix: real0, real1, real2, real3
