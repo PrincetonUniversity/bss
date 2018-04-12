@@ -179,7 +179,7 @@ def probit_inclusion_probs( xy_file=None, cor_file=None, iters=1000, burnin=500)
 if __name__ == '__main__':
     npr.seed(1)
 
-    data_dir = '../../data/small_eQTL'
+    data_dir = 'data/small_eQTL'
     prefix   = 'sim96'
     sys.stderr.write("Performing test with file %s.\n" % (prefix))
     

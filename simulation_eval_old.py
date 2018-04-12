@@ -141,7 +141,7 @@ def write_predictions(P, prefix, rsids, gt, las_predict, fsr_predict, ard_predic
                       bgs0_predict, bgs1_predict, bgs2_predict,
                       map0, map1, map2):
     # FIXME: yeah, yeah... hard-coded paths... blargh
-    filename = '../../data/sim/preds/' + prefix+"_predictions"+str(P)+".out"
+    filename = 'data/sim/preds/' + prefix+"_predictions"+str(P)+".out"
     
     rsidsx = np.array(rsids, dtype='|S20')
     results = np.vstack([rsidsx, gt, las_predict, fsr_predict, ard_predict, bgs0_predict, bgs1_predict, bgs2_predict, map0, map1, map2]).T
@@ -229,7 +229,7 @@ if __name__ == '__main__':
     #mkl.set_num_threads(1)
     np.random.seed(1)
 
-    data_dir = '../../data/sim/'
+    data_dir = 'data/sim/'
 
     # Load in the list of prefixes.
     prefix_list_file = os.path.join(data_dir, 'sim_files.txt')

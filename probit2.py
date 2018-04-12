@@ -414,7 +414,7 @@ class ProbitSS:
 if __name__ == '__main__':
     npr.seed(1)
 
-    data_dir = '../../data/small_eQTL'
+    data_dir = 'data/small_eQTL'
     prefix   = 'sim96'
     sys.stderr.write("Performing test with file %s.\n" % (prefix))
 
