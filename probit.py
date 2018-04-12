@@ -60,7 +60,7 @@ class ProbitSS:
 
         logpost_trace   = np.zeros(iters)
         inclusion_trace = np.zeros((iters, self.num_snps), dtype=bool)
-        for iter in xrange(-burnin, iters):
+        for iter in range(-burnin, iters):
             log_post = self.log_joint()
             
             sys.stderr.write('%05d / %05d] logprob: %f\n' % (iter, iters, log_post))
@@ -190,15 +190,15 @@ if __name__ == '__main__':
     t_start = time.time()
     inclusion_probs = model.run_mcmc(burnin=0, iters=100)
     t_end = time.time()
-    print t_end-t_start
+    print(t_end-t_start)
 
-    #print np.vstack([inclusion_probs, eqtls]).T
+    # print(np.vstack([inclusion_probs, eqtls]).T)
 
     #num_iters = 500
     #log_joint_trace = np.zeros(num_iters)
-    #for ii in xrange(num_iters):
+    #for ii in range(num_iters):
     #    log_joint_trace[ii] = model.log_joint()
-    #    print ii, log_joint_trace[ii], model.gamma0, model.lamb, 1/model.nu, np.sum(model.gamma > model.gamma0), np.sum(eqtls == (model.gamma > model.gamma0))
+    #    print(ii, log_joint_trace[ii], model.gamma0, model.lamb, 1/model.nu, np.sum(model.gamma > model.gamma0), np.sum(eqtls == (model.gamma > model.gamma0))
     #    model.update_gamma()
     #    model.update_gamma0()
     #    model.update_lambda()

@@ -13,10 +13,10 @@ def isPosDef(M):
         e_values, e_vectors = np.linalg.eig(M)
         for j in e_values:
             if j <= 0:
-                #print "negative evalue"
+                # print("negative evalue")
                 return False
         return True
-    #print M
+    # print(M)
     return False
 
 
@@ -41,11 +41,11 @@ def matrix_mi(a):
    aint = np.zeros(a.shape)
    for i in range(N):
        aint[i,:] = [ round(elem) for elem in a[i,] ]
-   print aint
+   print(aint)
    for i in range(N):
        #mix[i,i] = it_tool.mutual_information(i,i,2)# it.mutinfo2(a[i,],a[i,])
        mixd[i,i] = it_tool.mutual_information(i,i)
-   #print mix
+   # print(mix)
    for i in range(N-1):
        for j in range(i+1,N):
            #mi = math.exp(-((mix[i,i]+mix[j,j])/2) + it.mutinfo2(a[i,],a[j,]))
@@ -118,7 +118,7 @@ def ForwardStepwiseRegression(X,y):
             not_done = False
         else:
             include.append(max_i)
-            #print "including "+str(max_i)+" with bic "+str(max_b)
+            # print("including "+str(max_i)+" with bic "+str(max_b))
             b = max_b
             remaining.remove(max_i)
     clf.fit(X[:,include],y)

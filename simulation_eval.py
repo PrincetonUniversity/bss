@@ -75,7 +75,7 @@ def ForwardStepwiseRegression(X,y):
             not_done = False
         else:
             include.append(max_i)
-            #print "including "+str(max_i)+" with bic "+str(max_b)
+            #print("including "+str(max_i)+" with bic "+str(max_b))
             b = max_b
             remaining.remove(max_i)
     clf.fit(X[:,include],y)
@@ -127,17 +127,17 @@ def write_predictions(P, prefix, gt, las_predict, fsr_predict, ard_predict,
     filename = 'data/sim/preds/' + prefix+"_predictions"+str(P)+".out"
 
     results = np.vstack([gt, las_predict, fsr_predict, ard_predict, bgs0_predict, bgs1_predict, bgs2_predict, bgs3_predict, map0, map1, map2, map3]).T
-    print "Writing predictions to %s." % (filename)
+    print("Writing predictions to %s." % (filename))
 
     np.savetxt(filename, results)
 
 def test_files(path, prefix, P, burnin, iters):
     onlyfiles = [ f for f in os.listdir(path) if os.path.isfile(os.path.join(path,f)) ]
-    print onlyfiles
+    print(onlyfiles)
     for fn in onlyfiles:
         if prefix in fn and 'yx_' in fn and '_'+str(P)+'.' in fn:
-            print "opening "+fn
-            print fn[0:fn.index('_')]
+            print("opening "+fn)
+            print(fn[0:fn.index('_')])
             (X,y,gt,corr1, corr2) = data.load_data2(path,fn[0:fn.index('_')], str(P))
             # build an identity matrix for spike slab with no group structure
             corr0 = np.zeros_like(corr1)
@@ -146,15 +146,15 @@ def test_files(path, prefix, P, burnin, iters):
 
             # Lasso Lars regression
             las_predict = LassoRegressionSelection(X,y)
-            print "Lasso finished..."
+            print("Lasso finished...")
 
             # ARD sparse regression
             ardlf = ARDRegression(normalize=False,compute_score=True, copy_X=True)
             ardlf.fit(X, y)
 
-            #print ardlf.coef_
+            # print(ardlf.coef_)
             ard_predict = ardlf.coef_
-            print "ARD finished..."
+            print("ARD finished...")
 
             fsr_predict = ForwardStepwiseRegression(X,y)
 
@@ -178,34 +178,34 @@ def run_test(path, prefix, dims, burnin, iters):
 
     # LASSO
     las_predict = LassoRegressionSelection(X, y)
-    print "LASSO complete"
+    print("LASSO complete")
     
     # ARD sparse regression
     ardlf = ARDRegression(normalize=False,compute_score=True, copy_X=True)
     ardlf.fit(X, y)
 
-    #print ardlf.coef_
+    # print(ardlf.coef_)
     ard_predict = ardlf.coef_
-    print "ARD regression complete"
+    print("ARD regression complete")
 
     fsr_predict = ForwardStepwiseRegression(X,y)
-    print "FSR complete"
+    print("FSR complete")
 
     model0 = probit.ProbitSS(X, y, np.eye(corr.shape[0]), sample_xi=False)
     inclusion_probs0, map0 = model0.run_mcmc(burnin=burnin, iters=iters)  
-    print "Vanilla S-S complete"
+    print("Vanilla S-S complete")
 
     model1 = probit.ProbitSS(X, y, corr, sample_xi=False)
     inclusion_probs1, map1 = model1.run_mcmc(burnin=burnin, iters=iters)  
-    print "Correlation S-S complete"
+    print("Correlation S-S complete")
 
     model2 = probit.ProbitSS(X, y, cov, sample_xi=True)
     inclusion_probs2, map2 = model2.run_mcmc(burnin=burnin, iters=iters)  
-    print "Covariance+Xi S-S complete"
+    print("Covariance+Xi S-S complete")
 
     model3 = probit.ProbitSS(X, y, corr, sample_xi=True)
     inclusion_probs3, map3 = model3.run_mcmc(burnin=burnin, iters=iters)  
-    print "Correlation+Xi S-S complete"
+    print("Correlation+Xi S-S complete")
 
     write_predictions(dims, prefix, gt, las_predict, fsr_predict, ard_predict,
                       inclusion_probs0, inclusion_probs1, inclusion_probs2, inclusion_probs3,
@@ -219,18 +219,18 @@ if __name__ == '__main__':
 
     # Load in the list of prefixes.
     prefix_list_file = os.path.join(data_dir, 'sim_files.txt')
-    #print prefix_list_file
+    # print(prefix_list_file)
     prefixes = [line.rstrip('\n') for line in open(prefix_list_file)]
-    #print prefixes
+    # print(prefixes)
 
     if len(sys.argv) == 1:
         # No argument? print total number
-        print len(prefixes)
+        print(len(prefixes))
         sys.exit(-1)
     else:        
         prefix_idx = int(sys.argv[1])-1
 
-    print "Running evaluations for %s" % (prefixes[prefix_idx])
+    print("Running evaluations for %s" % (prefixes[prefix_idx]))
 
     dims = 200
     run_test(data_dir, prefixes[prefix_idx], dims, 500, 1000)

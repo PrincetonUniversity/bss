@@ -8,15 +8,15 @@ def load_xy_file(filename):
     fh = open(filename, 'r')
     reader = csv.reader(fh, delimiter=',')
 
-    header = reader.next()
-    phenos = np.array(map(float, header[2:]))
+    header = next(reader)
+    phenos = np.array(list(map(float, header[2:])))
 
     eqtls = []
     genos = []
     for row in reader:
         rsid = row[0]
         eqtls.append(float(row[1]))
-        genos.append(np.array(map(float, row[2:])))
+        genos.append(np.array(list(map(float, row[2:]))))
 
     eqtls = np.array(eqtls)
     genos = np.array(genos)
@@ -42,10 +42,10 @@ def load_cor_file(filename):
     fh = open(filename, 'r')
     reader = csv.reader(fh, delimiter=',')
 
-    header = reader.next()
+    header = next(reader)
     corr = []
     for row in reader:
-        corr.append(np.array(map(float, row)))
+        corr.append(np.array(list(map(float, row))))
     corr = np.array(corr)
     
     fh.close()

@@ -57,11 +57,11 @@ def simulate_tag_data(genes, genenames, P):
         prev = []
         fn = path1+"cisgenes/CAP_LCL_"+gn+"_cis_snps.out2"
         fn2 = path1+"cisgenes2/CAP_LCL_"+gn+"_cis_snps.out2"
-        print fn
+        print(fn)
         if os.path.exists(fn):
             ns = file_len(fn)
-            print N
-            print ns
+            print(N)
+            print(ns)
             snps = np.zeros((N,ns))
             rsids = []
             snps = read_table(fn, snps, rownames=True, rnames = rsids, startat=3)
@@ -87,9 +87,9 @@ def simulate_tag_data(genes, genenames, P):
         covmat = utils.matrix_cor(snps[indices_sub,:])
         covmat2 = np.cov(snps[indices_sub,:])
         #covmat3 = matrix_mi(snps[indices_sub,:])
-        print utils.isPosDef(covmat)
-        print utils.isPosDef(covmat2)
-        #print utils.isPosDef(covmat3)
+        print(utils.isPosDef(covmat))
+        print(utils.isPosDef(covmat2))
+        # print(utils.isPosDef(covmat3))
         
         effects = []
         eqtlindices = [0] * (total_snps - tag_eqtls)
@@ -98,9 +98,9 @@ def simulate_tag_data(genes, genenames, P):
             if j in eqtls[0:(total_eqtls-tag_eqtls)]:
                 eqtlindices[j] = effects
             effects.append(effect)
-        print eqtls
-        print "Number of eqtls (non-tag): "+str(sum(eqtlindices))
-        print "Number of eqtls (tag): "+str(tag_eqtls)
+        print(eqtls)
+        print("Number of eqtls (non-tag): "+str(sum(eqtlindices)))
+        print("Number of eqtls (tag): "+str(tag_eqtls))
         genesim = []
         acov = random.uniform(0.5, 2)
         for k in range(N):
@@ -128,11 +128,11 @@ def simulate_ryan_data(genes, genenames, P):
         prev = []
         fn = path1+"cisgenes/CAP_LCL_"+gn+"_cis_snps.out2"
         fn2 = path1+"cisgenes2/CAP_LCL_"+gn+"_cis_snps.out2"
-        print fn
+        print(fn)
         if os.path.exists(fn):
             ns = file_len(fn)
-            print N
-            print ns
+            print(N)
+            print(ns)
             snps = np.zeros((N,ns))
             rsids = []
             snps = read_table(fn, snps, rownames=True, rnames = rsids, startat=3)
@@ -151,19 +151,19 @@ def simulate_ryan_data(genes, genenames, P):
         rsids = [ rsids[j] for j in indices ]
         snps = snps[indices,:]
         covmat = utils.matrix_cor(snps)
-        print snps.shape
+        print(snps.shape)
         covmat2 = np.cov(snps)
         #covmat3 = matrix_mi(snps)
-        print utils.isPosDef(covmat)
-        print utils.isPosDef(covmat2)
-        #print utils.isPosDef(covmat3)
+        print(utils.isPosDef(covmat))
+        print(utils.isPosDef(covmat2))
+        # print(utils.isPosDef(covmat3))
         
         eqtlindices = [0] * P
         total_eqtls = random.sample(range(2,7),1)[0]
         eqtls = random.sample(range(P), total_eqtls)
         for j in eqtls:
             eqtlindices[j] = (random.betavariate(0.1, 0.1)*2.0)-1.0
-        print eqtls
+        print(eqtls)
         genesim = []
         acov = random.uniform(0.5, 2)
         for k in range(N):
@@ -193,11 +193,11 @@ def write_actual_data(genes, genenames, P):
         fn = path1+"cissnps/CAP_LCL_"+gn+"_cis_snps_AH.out2"
         #fn = path1+"cisgenes/CAP_LCL_"+gn+"_cis_snps.out2"
         fn2 = path1+"cisgenes2/CAP_LCL_"+gn+"_cis_snps.out2"
-        print fn
+        print(fn)
         if os.path.exists(fn):
             ns = file_len(fn)
-            print N
-            print ns
+            print(N)
+            print(ns)
             snps = np.zeros((N,ns))
             rsids = []
             snps = read_table(fn, snps, rownames=True, rnames = rsids, startat=3)
@@ -214,12 +214,12 @@ def write_actual_data(genes, genenames, P):
         print(indices)
 
         covmat = utils.matrix_cor(snps)
-        #print snps.shape
+        # print(snps.shape)
         #covmat2 = np.cov(snps)
         #covmat3 = matrix_mi(snps)
-        print utils.isPosDef(covmat)
-        #print utils.isPosDef(covmat2)
-        #print utils.isPosDef(covmat3)
+        print(utils.isPosDef(covmat))
+        # print(utils.isPosDef(covmat2))
+        # print(utils.isPosDef(covmat3))
         
         eqtlindices = [0] * covmat.shape[0]
 
@@ -231,17 +231,17 @@ def write_actual_data(genes, genenames, P):
 
 def write_actual_subsampled_data(genes, genenames, P):
     N = genes.shape[0]
-    print N
+    print(N)
     for i in range(9):
         gn = genenames[i]
         gene = genes[:,i]
         prev = []
         fn = path+"real"+str(i)+"_yx_10000.out"
-        print fn
+        print(fn)
         if os.path.exists(fn):
             ns = file_len(fn)
-            print N
-            print ns
+            print(N)
+            print(ns)
             #snps = np.zeros((N,ns))
             #gene2 = np.zeros(N)
             #rsids = []
@@ -250,20 +250,20 @@ def write_actual_subsampled_data(genes, genenames, P):
             continue
 
         # find P indices to include
-        print snps.shape
+        print(snps.shape)
         snps = snps.T
         bestpvs = [1.0, 1.0, 1.0]
         bestinds = [-1, -1, -1]
         for j in range(len(snps)):
             #gradient, intercept, r_value, p_value, std_err = stats.linregress(snps[j,:],gene)
             gradient, intercept, r_value, p_value, std_err = stats.linregress(gene2,snps[j,:])
-            #print p_value
+            # print(p_value)
             for k in range(len(bestpvs)):
                 if p_value < bestpvs[k]:
                     bestpvs[k] = p_value
                     bestinds[k] = j
                     break
-        print bestpvs
+        print(bestpvs)
         allindices = range(len(rsids))
         for k in range(len(bestinds)):
             allindices.remove(bestinds[k])
@@ -274,12 +274,12 @@ def write_actual_subsampled_data(genes, genenames, P):
         rsids = [ rsids[j] for j in indices ]
         snps = snps[indices,:]
         covmat = utils.matrix_cor(snps)
-        #print snps.shape
+        # print(snps.shape)
         #covmat2 = np.cov(snps)
         #covmat3 = matrix_mi(snps)
-        print utils.isPosDef(covmat)
-        #print utils.isPosDef(covmat2)
-        #print utils.isPosDef(covmat3)
+        print(utils.isPosDef(covmat))
+        # print(utils.isPosDef(covmat2))
+        # print(utils.isPosDef(covmat3))
         
         eqtlindices = [0] * covmat.shape[0]
         for k in range(len(bestinds)):
@@ -324,7 +324,7 @@ def main():
 
     #genes = read_table(path1+'/CAP_LCL-eqtl-genes.out', genes, header = True, genenames=genenames)
     genes = read_table(path1+'/CAP_LCL-eqtl-AH-genes.out', genes, header = True, genenames=genenames)
-    print genes[1:10,1:10]
+    print(genes[1:10,1:10])
     #simulate_tag_data(genes, genenames, 200)
     #simulate_ryan_data(genes, genenames[1:500], 1000)
     write_actual_subsampled_data(genes, genenames, 100)

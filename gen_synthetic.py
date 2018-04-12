@@ -14,9 +14,9 @@ if local_sparsity < global_sparsity:
     raise Exception("Local sparsity must be greater than global sparsity.")
 else:
     group_sparsity = global_sparsity / local_sparsity
-    print "Between-Group Sparsity: %f" % (group_sparsity)
-    print "Within-Group Sparsity:  %f" % (local_sparsity)
-    print "Effective Sparsity:     %f" % (global_sparsity)
+    print("Between-Group Sparsity: %f" % (group_sparsity))
+    print("Within-Group Sparsity:  %f" % (local_sparsity))
+    print("Effective Sparsity:     %f" % (global_sparsity))
 
 # Index the SNPs.
 X = np.arange(num_snps) + 1

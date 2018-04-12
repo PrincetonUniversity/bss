@@ -35,15 +35,15 @@ class InformationTheoryTool:
         values_x = set(self.data[x_index])
         # Print debug info
         if debug:
-            print 'Entropy of'
-            print self.data[x_index]
+            print('Entropy of')
+            print(self.data[x_index])
         # For each random
         for value_x in values_x:
             px = shape(where(self.data[x_index]==value_x))[1] / self.n_cols
             if px > 0.0:
                 summation += px * math.log(px, log_base)
             if debug:
-                print '(%d) px:%f' % (value_x, px)
+                print('(%d) px:%f' % (value_x, px))
         if summation == 0.0:
             return summation
         else:
@@ -63,9 +63,9 @@ class InformationTheoryTool:
         values_y = set(self.data[y_index])
         # Print debug info
         if debug:
-            print 'Entropy between'
-            print self.data[x_index]
-            print self.data[y_index]
+            print('Entropy between')
+            print(self.data[x_index])
+            print(self.data[y_index])
         # For each random
         for value_x in values_x:
             for value_y in values_y:
@@ -74,7 +74,7 @@ class InformationTheoryTool:
                 if pxy > 0.0:
                     summation += pxy * math.log(pxy, log_base)
                 if debug:
-                    print '(%d,%d) pxy:%f' % (value_x, value_y, pxy)
+                    print('(%d,%d) pxy:%f' % (value_x, value_y, pxy))
         if summation == 0.0:
             return summation
         else:
@@ -96,9 +96,9 @@ class InformationTheoryTool:
         values_y = set(self.data[y_index])
         # Print debug info
         if debug:
-            print 'MI between'
-            print self.data[x_index]
-            print self.data[y_index]
+            print('MI between')
+            print(self.data[x_index])
+            print(self.data[y_index])
         # For each random
         for value_x in values_x:
             for value_y in values_y:
@@ -109,7 +109,7 @@ class InformationTheoryTool:
                 if pxy > 0.0:
                     summation += pxy * math.log((pxy / (px*py)), log_base)
                 if debug:
-                    print '(%d,%d) px:%f py:%f pxy:%f' % (value_x, value_y, px, py, pxy)
+                    print('(%d,%d) px:%f py:%f pxy:%f' % (value_x, value_y, px, py, pxy))
         return summation
 
 #Continuous mutual information in Python
@@ -142,7 +142,7 @@ def mutinfo2(x,y):
     # Compute MI(X,Y)
     (minfo_xy, err_xy) = dblquad(mutual_info, -INF, INF, lambda a: 0, lambda a: INF)
 
-    print 'minfo_xy = ', minfo_xy
+    print('minfo_xy = ', minfo_xy)
     mutual_info = lambda a,b: gkde_xy([a,b]) * math.log((gkde_xy([a,b]) / ((gkde_x(a) * gkde_y(b)) + MIN_DOUBLE)) + MIN_DOUBLE)
     return mutual_info
 
@@ -162,18 +162,18 @@ it_tool = InformationTheoryTool(data)
 
 # entropy of  X_1 (3, 4, 5, 5, 3, 2, 2, 6, 6, 1)
 t_start = time.time()
-print 'Entropy(X_1): %f' % it_tool.single_entropy(1, 10, False)
-print 'Elapsed time: %f\n' % (time.time() - t_start)
+print('Entropy(X_1): %f' % it_tool.single_entropy(1, 10, False))
+print('Elapsed time: %f\n' % (time.time() - t_start))
 
 # entropy of  X_3 (7, 7, 7, 7, 7, 7, 7, 7, 7, 7)
 t_start = time.time()
-print 'Entropy(X_3): %f' % it_tool.single_entropy(3, 10)
-print 'Elapsed time: %f\n' % (time.time() - t_start)
+print('Entropy(X_3): %f' % it_tool.single_entropy(3, 10))
+print('Elapsed time: %f\n' % (time.time() - t_start))
 
 # entropy of  X_4 (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
 t_start = time.time()
-print 'Entropy(X_4): %f' % it_tool.single_entropy(4, 10)
-print 'Elapsed time: %f\n' % (time.time() - t_start)
+print('Entropy(X_4): %f' % it_tool.single_entropy(4, 10))
+print('Elapsed time: %f\n' % (time.time() - t_start))
 
 
 
@@ -181,13 +181,13 @@ print 'Elapsed time: %f\n' % (time.time() - t_start)
 
 # entropy of  X_0 (0, 0, 1, 1, 0, 1, 1, 2, 2, 2) and X_1 (3, 4, 5, 5, 3, 2, 2, 6, 6, 1)
 t_start = time.time()
-print 'Entropy(X_0, X_1): %f' % it_tool.entropy(0, 1, 10)
-print 'Elapsed time: %f\n' % (time.time() - t_start)
+print('Entropy(X_0, X_1): %f' % it_tool.entropy(0, 1, 10))
+print('Elapsed time: %f\n' % (time.time() - t_start))
 
 # entropy of  X_3 (7, 7, 7, 7, 7, 7, 7, 7, 7, 7) and X_3 (7, 7, 7, 7, 7, 7, 7, 7, 7, 7)
 t_start = time.time()
-print 'Entropy(X_3, X_3): %f' % it_tool.entropy(3, 3, 10)
-print 'Elapsed time: %f\n' % (time.time() - t_start)
+print('Entropy(X_3, X_3): %f' % it_tool.entropy(3, 3, 10))
+print('Elapsed time: %f\n' % (time.time() - t_start))
 
 
 
@@ -195,13 +195,13 @@ print 'Elapsed time: %f\n' % (time.time() - t_start)
 
 # Print mutual information between X_0 (0,0,1,1,0,1,1,2,2,2) and X_1 (3,4,5,5,3,2,2,6,6,1)
 t_start = time.time()
-print 'MI(X_0, X_1): %f' % it_tool.mutual_information(0, 1, 10)
-print 'Elapsed time: %f\n' % (time.time() - t_start)
+print('MI(X_0, X_1): %f' % it_tool.mutual_information(0, 1, 10))
+print('Elapsed time: %f\n' % (time.time() - t_start))
 
 # Print mutual information between X_1 (3,4,5,5,3,2,2,6,6,1) and X_2 (7,2,1,3,2,8,9,1,2,0)
 t_start = time.time()
-print 'MI(X_1, X_2): %f' % it_tool.mutual_information(1, 2, 10)
-print 'Elapsed time: %f\n' % (time.time() - t_start)
+print('MI(X_1, X_2): %f' % it_tool.mutual_information(1, 2, 10))
+print('Elapsed time: %f\n' % (time.time() - t_start))
 
 
 

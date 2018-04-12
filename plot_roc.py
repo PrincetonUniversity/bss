@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     fp = np.zeros((inclusion.shape[0]-1,inclusion.shape[1]+1))
     tp = np.zeros((inclusion.shape[0]-1,inclusion.shape[1]+1))
-    for ii in xrange(inclusion.shape[0]-1):
+    for ii in range(inclusion.shape[0]-1):
         fp[ii,:], tp[ii,:] = compute_roc(inclusion[0,:], inclusion[ii+1,:])
 
     pl.plot(fp.T, tp.T)

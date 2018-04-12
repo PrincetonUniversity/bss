@@ -179,7 +179,7 @@ class ProbitSS:
         else:
             log_xi_prior = 0.0
 
-        #print log_marg_like, log_gam0_prior, log_nu_prior, log_lamb_prior, log_gam_prior, log_xi_prior
+        # print(log_marg_like, log_gam0_prior, log_nu_prior, log_lamb_prior, log_gam_prior, log_xi_prior)
 
         return log_marg_like + log_gam0_prior + log_nu_prior + log_lamb_prior + log_gam_prior + log_xi_prior
 
@@ -188,7 +188,7 @@ class ProbitSS:
         logpost_trace   = np.zeros(iters)
         inclusion_trace = np.zeros((iters, self.P), dtype=bool)
 
-        for iter in xrange(-burnin, iters):
+        for iter in range(-burnin, iters):
 
             log_post = self.log_joint()
 
@@ -219,7 +219,7 @@ class ProbitSS:
         logpost_trace = np.zeros(iters)
         loglike_trace = np.zeros(iters)
 
-        for iter in xrange(-burnin, iters):
+        for iter in range(-burnin, iters):
             log_post = self.log_joint()
             log_like = self.log_marg_like(self.gamma, self.gamma0, self.nu, self.lamb)
 
@@ -430,7 +430,7 @@ if __name__ == '__main__':
     t_start = time.time()
     logpost_trace = model.run_mcmc(burnin=500, iters=5000, post_trace=True)
     t_end = time.time()
-    print t_end-t_start
+    print(t_end-t_start)
 
     pl.subplot(2,1,1)
     pl.plot(acf(logpost_trace, 200))
@@ -443,4 +443,4 @@ if __name__ == '__main__':
     #model.run_geweke(burnin=500, iters=10000)
 
     #inclusion_probs = model.run_mcmc(burnin=0, iters=100)
-    #print np.vstack([inclusion_probs, eqtls]).T
+    # print(np.vstack([inclusion_probs, eqtls]).T)
