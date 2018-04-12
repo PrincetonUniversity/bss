@@ -1,16 +1,14 @@
 import numpy
 import scipy.special
 
-
 def gammaln(x):
     """
     Log of the gamma function.
     """
-    # small  = numpy.nonzero(x < numpy.finfo(numpy.float64).eps)
+    #small  = numpy.nonzero(x < numpy.finfo(numpy.float64).eps)
     result = scipy.special.gammaln(x)
-    # result[small] = -numpy.log(x[small])
+    #result[small] = -numpy.log(x[small])
     return result
-
 
 def gammapdfln(x, a, b):
     """
@@ -18,10 +16,8 @@ def gammapdfln(x, a, b):
     """
     return -gammaln(a) + a*numpy.log(b) + (a-1.0)*numpy.log(x) - b*x
 
-
 def invgammapdfln(x, a, b):
     return -gammaln(a) + a*numpy.log(b) - (a+1.0)*numpy.log(x) - b/x
-
 
 def betapdfln(x, a, b):
     """

@@ -1,16 +1,11 @@
-import sys
-
-if (sys.version_info > (3, 0)):
-    import pymc3 as pymc
-else:
-    import pymc
-
-import numpy as np
+import numpy        as np
 import numpy.random as npr
 
+def acf(x, length=50):
+    return np.array([1]+[np.corrcoef(x[:-i], x[i:])[0,1] for i in range(1, length)])
 
 def elliptical_slice(xx, chol_Sigma, log_like_fn):
-    D = xx.size
+    D  = xx.size
 
     # Select a random ellipse.
     nu = np.dot(chol_Sigma, npr.randn(D))
@@ -19,7 +14,7 @@ def elliptical_slice(xx, chol_Sigma, log_like_fn):
     hh = np.log(npr.rand()) + log_like_fn(xx)
 
     # Randomly center the bracket.
-    phi = npr.rand()*2*np.pi
+    phi     = npr.rand()*2*np.pi
     phi_max = phi
     phi_min = phi_max - 2*np.pi
 
@@ -42,7 +37,6 @@ def elliptical_slice(xx, chol_Sigma, log_like_fn):
 
         phi = npr.rand()*(phi_max - phi_min) + phi_min
 
-
 def uni_slice_sample(init_x, logprob, lower, upper):
     llh_s = np.log(npr.rand()) + logprob(init_x)
     while True:
@@ -57,8 +51,7 @@ def uni_slice_sample(init_x, logprob, lower, upper):
         else:
             raise Exception("Slice sampler shrank to zero!")
 
-
-def slice_sample(init_x, logprob, sigma=1.0, step_out=True, max_steps_out=1000,
+def slice_sample(init_x, logprob, sigma=1.0, step_out=True, max_steps_out=1000, 
                  compwise=True, doubling_step=True, verbose=False):
 
     def direction_slice(direction, init_x):
@@ -86,21 +79,20 @@ def slice_sample(init_x, logprob, sigma=1.0, step_out=True, max_steps_out=1000,
         u_steps_out = 0
         if step_out:
             if doubling_step:
-                while (dir_logprob(lower) > llh_s or dir_logprob(upper) > llh_s) and \
-                        (l_steps_out + u_steps_out) < max_steps_out:
+                while (dir_logprob(lower) > llh_s or dir_logprob(upper) > llh_s) and (l_steps_out + u_steps_out) < max_steps_out:
                     if npr.rand() < 0.5:
                         l_steps_out += 1
-                        lower -= (upper-lower)
+                        lower       -= (upper-lower)                        
                     else:
                         u_steps_out += 1
-                        upper += (upper-lower)
+                        upper       += (upper-lower)
             else:
                 while dir_logprob(lower) > llh_s and l_steps_out < max_steps_out:
                     l_steps_out += 1
-                    lower -= sigma
+                    lower       -= sigma                
                 while dir_logprob(upper) > llh_s and u_steps_out < max_steps_out:
                     u_steps_out += 1
-                    upper += sigma
+                    upper       += sigma
 
         start_upper = upper
         start_lower = lower
@@ -108,10 +100,10 @@ def slice_sample(init_x, logprob, sigma=1.0, step_out=True, max_steps_out=1000,
         steps_in = 0
         while True:
             steps_in += 1
-            new_z = (upper - lower)*npr.rand() + lower
-            new_llh = dir_logprob(new_z)
+            new_z     = (upper - lower)*npr.rand() + lower
+            new_llh   = dir_logprob(new_z)
             if np.isnan(new_llh):
-                print(new_z, direction*new_z + init_x, new_llh, llh_s, init_x, logprob(init_x))
+                print new_z, direction*new_z + init_x, new_llh, llh_s, init_x, logprob(init_x)
                 raise Exception("Slice sampler got a NaN")
             if new_llh > llh_s and acceptable(new_z, llh_s, start_lower, start_upper):
                 break
@@ -123,7 +115,7 @@ def slice_sample(init_x, logprob, sigma=1.0, step_out=True, max_steps_out=1000,
                 raise Exception("Slice sampler shrank to zero!")
 
         if verbose:
-            print("Steps Out:", l_steps_out, u_steps_out, " Steps In:", steps_in)
+            print "Steps Out:", l_steps_out, u_steps_out, " Steps In:", steps_in
 
         return new_z*direction + init_x
 
@@ -139,7 +131,7 @@ def slice_sample(init_x, logprob, sigma=1.0, step_out=True, max_steps_out=1000,
         npr.shuffle(ordering)
         new_x = init_x.copy()
         for d in ordering:
-            direction = np.zeros(dims)
+            direction    = np.zeros((dims))
             direction[d] = 1.0
             new_x = direction_slice(direction, new_x)
 
@@ -153,28 +145,27 @@ def slice_sample(init_x, logprob, sigma=1.0, step_out=True, max_steps_out=1000,
     else:
         return new_x
                     
-
 if __name__ == '__main__':
     npr.seed(1)
 
     import pylab as pl
 
-    D = 10
-
-    def fn(x):
-        return -0.5*np.sum(x**2)
+    D  = 10
+    fn = lambda x: -0.5*np.sum(x**2)
 
     iters = 1000
-    samps = np.zeros((iters, D))
-    for ii in range(1, iters):
-        samps[ii, :] = slice_sample(samps[ii-1, :], fn, sigma=0.1, step_out=False, doubling_step=True, verbose=False)
+    samps = np.zeros((iters,D))
+    for ii in xrange(1,iters):
+        samps[ii,:] = slice_sample(samps[ii-1,:], fn, sigma=5.0, step_out=True, doubling_step=True, verbose=False)
 
     ll = -0.5*np.sum(samps**2, axis=1)
 
-    scores = pymc.geweke(ll)
-    pymc.Matplot.geweke_plot(scores, 'test')
+    acf = acf(ll)
 
-    pymc.raftery_lewis(ll, q=0.025, r=0.01)
+    pl.plot(acf)
+    pl.grid()
+    pl.show()
 
-    pymc.Matplot.autocorrelation(ll, 'test')
+
+    
 
