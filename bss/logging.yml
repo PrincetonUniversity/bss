@@ -1,0 +1,18 @@
+version: 1
+
+formatters:
+    simpleFormater:
+        format: '%(message)s'
+        datefmt: '%Y/%m/%d %H:%M:%S'
+
+handlers:
+    console:
+        class: logging.StreamHandler
+        formatter: simpleFormater
+        level: DEBUG
+        stream: ext://sys.stdout
+
+loggers:
+    bss:
+        level: DEBUG
+        handlers: [console]

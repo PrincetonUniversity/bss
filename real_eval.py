@@ -204,7 +204,7 @@ if __name__ == '__main__':
 
     dims = 10000
     t_start = time.time()
-    run_test(data_dir, prefixes[prefix_idx], dims, 50, 100)
+    run_test(data_dir, prefixes[prefix_idx], dims, 500, 1000)
     t_end = time.time()
 
     print(t_end-t_start)
