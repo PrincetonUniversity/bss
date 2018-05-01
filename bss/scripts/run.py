@@ -1,7 +1,6 @@
 import argparse
 from bss.utils.data import load_data
 from bss.models.probit import ProbitSS
-from bss.utils import Benchmark
 
 
 def parse_args():
@@ -14,19 +13,16 @@ def parse_args():
 
 
 def main():
-    with Benchmark('running'):
-        opts = parse_args()
-        X, y, _, R = load_data(opts.file_pattern)
-        model = ProbitSS(
-            X=X,
-            Y=y,
-            R=R,
-            sample_xi=False
-        )
-        model.run_mcmc(burnin=opts.burnin, iters=opts.iters)
+    opts = parse_args()
+    X, y, _, R = load_data(opts.file_pattern)
+    model = ProbitSS(
+        X=X,
+        Y=y,
+        R=R,
+        sample_xi=False
+    )
+    model.run_mcmc(burnin=opts.burnin, iters=opts.iters)
 
 
 if __name__ == '__main__':
-    import numpy as np
-    np.random.seed(1)
     main()

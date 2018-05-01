@@ -1,3 +1,5 @@
+"""BSS Package rocks muchly."""
+
 __version__ = '0.0.1'
 
 import os.path
