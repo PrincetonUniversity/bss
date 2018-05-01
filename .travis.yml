@@ -1,5 +1,6 @@
 language: python
 python:
   - "3.6"
-install: true
-script: py.test tests
+install:
+  - pip install -r requirements.txt
+script: py.test bss/tests
