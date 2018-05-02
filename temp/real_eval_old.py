@@ -144,7 +144,7 @@ def test_files(path, prefix, P, burnin, iters):
     print(onlyfiles)
     for fn in onlyfiles:
         if prefix in fn and 'yx_' in fn and '_'+str(P)+'.' in fn:
-            print("opening "+)
+            print("opening ")
             print(fn[0:fn.index('_')])
             (X,y,gt,corr1, corr2) = data.load_data2(path,fn[0:fn.index('_')], str(P))
 

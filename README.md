@@ -6,7 +6,7 @@ Companion code for the paper
 
 [Bayesian Structured Sparsity from Gaussian Fields](https://arxiv.org/abs/1407.2235)
 
-Barbara E. Englehardt, Ryan P. Adams
+Barbara E. Engelhardt, Ryan P. Adams
 
 Abstract:
 

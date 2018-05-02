@@ -1,4 +1,4 @@
-import numpy        as np
+import numpy as np
 import numpy.random as npr
 
 
@@ -6,11 +6,11 @@ def acf(x, length=50):
     return np.array([1] + [np.corrcoef(x[:-i], x[i:])[0, 1] for i in range(1, length)])
 
 
-def elliptical_slice(xx, chol_Sigma, log_like_fn):
+def elliptical_slice(xx, chol_sigma, log_like_fn):
     D = xx.size
 
     # Select a random ellipse.
-    nu = np.dot(chol_Sigma, npr.randn(D))
+    nu = np.dot(chol_sigma, npr.randn(D))
 
     # Select the slice threshold.
     hh = np.log(npr.rand()) + log_like_fn(xx)
@@ -64,7 +64,7 @@ def slice_sample(init_x, logprob, sigma=1.0, step_out=True, max_steps_out=1000,
         def acceptable(z, llh_s, L, U):
             while (U - L) > 1.1 * sigma:
                 middle = 0.5 * (L + U)
-                splits = (middle > 0 and z >= middle) or (middle <= 0 and z < middle)
+                splits = (0 < middle <= z) or (z < middle <= 0)
                 if z < middle:
                     U = middle
                 else:
@@ -135,7 +135,7 @@ def slice_sample(init_x, logprob, sigma=1.0, step_out=True, max_steps_out=1000,
         npr.shuffle(ordering)
         new_x = init_x.copy()
         for d in ordering:
-            direction = np.zeros((dims))
+            direction = np.zeros(dims)
             direction[d] = 1.0
             new_x = direction_slice(direction, new_x)
 

@@ -4,12 +4,12 @@ import csv
 import numpy as np
 
 
-def load_xy_file(path):
+def load_xy_file(path, delimiter=','):
     with open(path, 'r') as f:
-        reader = csv.reader(f, delimiter=',')
+        reader = csv.reader(f, delimiter=delimiter)
 
         header = next(reader)
-        phenos = np.array(list(map(float, header[2:])))
+        phenos = list(map(float, header[2:]))
 
         eqtls = []
         genos = []
@@ -17,23 +17,19 @@ def load_xy_file(path):
             eqtls.append(bool(int(row[1])))
             genos.append(np.array(list(map(float, row[2:]))))
 
-        eqtls = np.array(eqtls)
-        genos = np.array(genos)
-
-        return genos.T, phenos, eqtls
+        return np.array(genos).T, np.array(phenos), np.array(eqtls)
 
 
-def load_cor_file(path):
+def load_cor_file(path, delimiter=','):
     with open(path, 'r') as f:
-        reader = csv.reader(f, delimiter=',')
+        reader = csv.reader(f, delimiter=delimiter)
 
         _ = next(reader)  # consume header
         corr = []
         for row in reader:
             corr.append(np.array(list(map(float, row))))
-        corr = np.array(corr)
 
-        return corr
+        return np.array(corr)
 
 
 def load_data(pattern):
