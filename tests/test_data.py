@@ -20,7 +20,7 @@ class DataTestCase(TestCase):
         self.assertEqual(eqtls.shape, (1509,))
 
     def test_load_cor(self):
-        cor = load_cor_file('sample_data/real0_cor1_10000.out')
+        cor = load_cor_file(os.path.join(DATA_DIR, 'real0_cor1_10000.out'))
         self.assertEqual(cor.shape, (1509, 1509))
 
     def test_load_data(self):
