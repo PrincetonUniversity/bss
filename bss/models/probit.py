@@ -19,7 +19,29 @@ class ProbitSS(object):
                  check_finite=True,
                  sample_xi=True,
                  min_eigenval=0, jitter=1e-6):
+        r"""
+        The Probit model used for our modelling for sparse regression using a Gaussian field.
 
+        .. math::
+
+            y|X,\beta,\beta_0, \nu \propto \mathcal{N}(\beta_0 1_n + X \beta, \nu^{-1} I_n)
+
+        :param X: The predictor matrix of real numbers, n x p in size, where n is the no. of samples
+            (genotypes) and p is the no. of features (SNPs)
+        :param Y: The response vector of real numbers, n x 1 in size, with each value representing the
+            phenotype value for the sample
+        :param R: The covariance matrix for the SNPs, p x p in size. The matrix may not be positive-definite,
+            but is converted to one internally.
+        :param target_sparsity: The proportion of included predictors. For example, a value of 0.01 indicates that
+            around 1% of total SNPs are expected be included in our model. This value affects the probit threshold
+            $\gamma_0$ of the model.
+        :param gamma0_v: Variance of the probit threshold $\gamma_0$
+        :param lamb_a: Shape parameter of the gamma prior placed on the model parameter
+            lambda, where lambda is the inverse squared global scale parameter for the regression weights.
+        :param lamb_b: Inverse-scale parameter of the gamma prior placed on the model parameter
+            lambda, where lambda is the inverse squared global scale parameter for the regression weights.
+
+        """
         self.X = X
         self.Y = Y
         self.R = R
@@ -134,7 +156,7 @@ class ProbitSS(object):
         self._update_gamma()
         self._update_gamma0()
         self._update_lambda()
-        self._update_nu()
+        self.update_nu()
         if self.sample_xi:
             self._update_xi()
 
@@ -150,12 +172,25 @@ class ProbitSS(object):
 
         self.gamma = elliptical_slice(self.gamma, self.get_cholesky(), slice_fn)
 
-    def _update_nu(self):
-        """
-        Apply MCMC transition operator to the precision parameter.
-        https://en.wikipedia.org/wiki/Conjugate_prior
-        """
+    def update_nu(self):
+        r"""
+        The scalar nu determines the precision of the residual Gaussian noise of the response variables.
+        With the choice of a conjugate gamma prior distribution, the conditional posterior is also gamma:
 
+        .. math::
+
+            p(\nu | y, X, \Gamma, \lambda) \propto
+            \mathcal{N}(y|0,\nu^{-1}(\lambda^{-1}(1_n1_n^T + X \Gamma X^T) + I_n)) \, Gam(\nu|a_\nu, b_\nu)
+
+            = Gam(\nu | a_\nu^{(n)}, b_\nu^{(n)})
+
+            a_\nu^{(n)} = a_\nu + \frac{N}{2}
+
+            b_\nu^{(n)} = b_\nu + \frac{1}{2} y^T (\lambda^{-1} (1_n 1_n^T + X \Gamma X^T) + I_n)^{-1} y
+
+        This function thus updates the value of nu using this analytical approach, by updating the parameters
+        of the gamma distribution and then drawing a sample from it.
+        """
         cov = self.masked_covariance(self.gamma, self.gamma0, self.lamb)
 
         distance = scipy.spatial.distance.mahalanobis(np.zeros(self.Y.shape), self.Y, np.linalg.inv(cov))
