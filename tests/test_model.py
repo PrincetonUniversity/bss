@@ -2,7 +2,7 @@ import os.path
 import numpy as np
 from unittest import TestCase
 
-from bss.models.probit import ProbitSS
+from bss.models.probit import Probit
 from bss.utils.data import load_data
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'sample_data')
@@ -17,11 +17,11 @@ class ModelTestCase(TestCase):
 
     def test_model1(self):
         X, y, _, R = load_data(os.path.join(DATA_DIR, 'real0_*_10000.out'))
-        model = ProbitSS(
+        model = Probit(
             X=X,
             Y=y,
             R=R,
-            sample_xi=True
+            xi=None
         )
         trace = model.run_mcmc(burnin=5, iters=10, post_trace=True)
         expected_trace = [
@@ -34,11 +34,10 @@ class ModelTestCase(TestCase):
 
     def test_model2(self):
         X, y, _, R = load_data(os.path.join(DATA_DIR, 'real0_*_10000.out'))
-        model = ProbitSS(
+        model = Probit(
             X=X,
             Y=y,
-            R=R,
-            sample_xi=False
+            R=R
         )
         trace = model.run_mcmc(burnin=5, iters=10, post_trace=True)
         expected_trace = [

@@ -1,46 +1,59 @@
 import operator
-from cachetools import cached
+from cachetools import cached, cachedmethod, Cache
 import numpy as np
 import numpy.random as npr
-import scipy
 import scipy.linalg as spla
 import scipy.stats as sps
 
 from bss import logger
 from bss.utils.mcmc import elliptical_slice, slice_sample
+from bss.utils.math import multivariate_normal
 
 
-class ProbitSS(object):
-    def __init__(self, X, Y, R,
-                 target_sparsity=0.01, gamma0_v=1.0,
-                 lamb_a=1e-6, lamb_b=1e-6,
-                 nu_a=1e-6, nu_b=1e-6,
-                 xi_a=1.0, xi_b=1.0,
-                 check_finite=True,
-                 sample_xi=True,
-                 min_eigenval=0, jitter=1e-6):
+class Probit(object):
+    def __init__(self, X, Y, R, target_sparsity=0.01, gamma0_v=1.0, lamb_a=1e-6, lamb_b=1e-6, nu_a=1e-6, nu_b=1e-6,
+                 xi=0.999999, xi_prior_shape=(1, 1), check_finite=True, min_eigenval=0, jitter=1e-6):
         r"""
-        The Probit model used for our modelling for sparse regression using a Gaussian field.
+        The Probit model used for our modeling for sparse regression using a Gaussian field.
 
         .. math::
 
             y|X,\beta,\beta_0, \nu \propto \mathcal{N}(\beta_0 1_n + X \beta, \nu^{-1} I_n)
 
         :param X: The predictor matrix of real numbers, n x p in size, where n is the no. of samples
-            (genotypes) and p is the no. of features (SNPs)
+            (genotypes) and p is the no. of features (SNPs).
         :param Y: The response vector of real numbers, n x 1 in size, with each value representing the
-            phenotype value for the sample
+            phenotype value for the sample.
         :param R: The covariance matrix for the SNPs, p x p in size. The matrix may not be positive-definite,
             but is converted to one internally.
         :param target_sparsity: The proportion of included predictors. For example, a value of 0.01 indicates that
             around 1% of total SNPs are expected be included in our model. This value affects the probit threshold
-            $\gamma_0$ of the model.
-        :param gamma0_v: Variance of the probit threshold $\gamma_0$
+            gamma_0 of the model.
+        :param gamma0_v: Variance of the probit threshold gamma_0
         :param lamb_a: Shape parameter of the gamma prior placed on the model parameter
             lambda, where lambda is the inverse squared global scale parameter for the regression weights.
         :param lamb_b: Inverse-scale parameter of the gamma prior placed on the model parameter
             lambda, where lambda is the inverse squared global scale parameter for the regression weights.
-
+        :param nu_a: Shape parameter of the gamma prior placed on the model parameter
+            nu, where nu is the residual precision.
+        :param nu_b: Inverse-scale parameter of the gamma prior placed on the model parameter
+            nu, where nu is the residual precision.
+        :param xi: The shrinkage constant in the interval [0,1] to regularize the covariance matrix towards the
+            identity matrix. This ensures that the covariance matrix is positive definite.
+            If None, then xi is sampled from a beta distribution with shape parameters specified by the tuple
+            xi_prior_shape.
+        :param xi_prior_shape: Shape parameters of the beta prior placed on the model parameter xi, specified as a
+            2-tuple of real values. xi is the shrinkage constant to regularize the covariance matrix towards the
+            identity matrix. This ensures that the covariance matrix is positive definite.
+            This argument is ignored and xi is not sampled, if it is specified explicitly using the xi parameter.
+        :param check_finite: Whether to check that the input matrices contain only finite numbers.
+            Disabling may give a performance gain, but may result in problems
+            (crashes, non-termination) if the inputs do contain infinities or NaNs.
+            This parameter is passed on to several linear algebra functions in scipy internally.
+        :param min_eigenval: Minimum Eigenvalue we can accept in the covariance matrix. Any eigenvalues encountered
+            below this threshold are set to zero, and the resulting covariance matrix normalized to give ones on the
+            diagonal.
+        :param jitter: A small value to add to the diagonals of the covariance matrix to avoid conditioning issues.
         """
         self.X = X
         self.Y = Y
@@ -48,21 +61,19 @@ class ProbitSS(object):
 
         self.N, self.P = self.X.shape
 
-        self.nu_a = nu_a
-        self.nu_b = nu_b
-        self.xi_a = xi_a
-        self.xi_b = xi_b
+        self.nu_a, self.nu_b = nu_a, nu_b
 
-        self.sample_xi = sample_xi
         self.check_finite = check_finite
 
-        if self.sample_xi:
-            self._xi_distribution = sps.beta(self.xi_a, self.xi_b)
+        if xi is None:
+            self.sample_xi = True
+            self._xi_distribution = sps.beta(*xi_prior_shape)
             self.xi = self._xi_distribution.mean()
         else:
-            self.xi = 1.0 - 1e-6
+            self.sample_xi = False
+            self.xi = xi
 
-        # Initialize scalar model parameters to their prior means.
+        # Initialize scalar model distributions and the parameter values to their prior means.
         self._gamma0_distribution = sps.norm(loc=sps.norm.ppf(1.0 - target_sparsity), scale=gamma0_v)
         self.gamma0 = self._gamma0_distribution.mean()
         self._lambda_distribution = sps.gamma(lamb_a, scale=1./lamb_b)
@@ -70,53 +81,55 @@ class ProbitSS(object):
         self._nu_distribution = sps.gamma(self.nu_a, scale=1./self.nu_b)
         self.nu = self._nu_distribution.mean()
 
-        # Ensure that the base correlation matrix is positive definite.
-        # This also guarantees that there are ones along the diagonal.
         self._bend_matrix(min_eigenval, jitter)
+        self.cov = multivariate_normal(cov=R, min_eigenval=min_eigenval, jitter=jitter)
 
         # Initialize the sparsity function.
-        self.gamma = np.dot(self.get_cholesky(), npr.randn(self.P))
-        # The above is an efficient way to sample from a multivariate gaussian distribution with known
-        # covariance matrix and known means (zeros here). We could also have done:
-        # self.gamma = sps.multivariate_normal.rvs(cov=self.get_covariance())
-        # But we don't do so to avoid messing with the unit-testing results.
+        self.gamma = self.get_covariance(self.xi).rvs()
+
+        self.cache = Cache(maxsize=1)
+
 
     def _bend_matrix(self, min_eigenval=0, jitter=1e-6):
-        """Make the correlation matrix positive definite and normalized."""
+        # Make the correlation matrix positive definite and normalized.
+        # This also guarantees that there are ones along the diagonal.
 
-        # Ensure that no eigenvalues are too small.
         # spla.eigh returns vector D and matrix V such that R = V*diag(D)*V'.
         evals, evecs = spla.eigh(self.R, check_finite=self.check_finite)
         evals[evals < min_eigenval] = min_eigenval
         self.R = np.dot(evecs, np.dot(np.diag(evals), evecs.T))
 
         # Add jitter and renormalize.
-        self.R = self.R + jitter * np.eye(self.R.shape[0])
+        self.R = self.R + jitter * np.eye(self.P)
         diagR = np.diag(self.R)[:, np.newaxis]
         self.R = self.R / np.sqrt(diagR * diagR.T)
 
-    def get_covariance(self, xi=None):
-        """
-        Compute the convex sum between R and the identity.
-        Todo: cache on xi
-        """
-        if xi is None:
-            xi = self.xi
-        return (1.0 - xi) * np.eye(self.P) + xi * self.R
-
-    @cached(cache={}, key=operator.attrgetter('xi'))
-    def get_cholesky(self):
-        return spla.cholesky(self.get_covariance(self.xi), lower=True, check_finite=False)
+    # @cached(cache={})
+    def get_covariance(self, xi):
+        x1 = multivariate_normal(cov=(xi * self.R) + (1.0 - xi) * np.eye(self.P))
+        x2 = multivariate_normal(cov=(xi * self.cov.cov) + (1.0 - xi) * np.eye(self.P))
+        assert(np.allclose(x1.cov, x2.cov))
+        return x2
 
     def masked_covariance(self, gamma, gamma0, lamb):
         masked_X = self.X[:, gamma > gamma0]
-        return (np.dot(masked_X, masked_X.T) + np.ones((self.N, self.N))) / lamb + np.eye(self.N)
+        return self.masked_covariance2(masked_X, lamb)
+
+    def mykey(self, *args):
+        key = []
+        for arg in args:
+            if isinstance(arg, np.ndarray):
+                key.append(hash(arg.data.tobytes()))
+            else:
+                key.append(arg)
+        return tuple(key)
+
+    @cachedmethod(cache=operator.attrgetter('cache'), key=mykey)
+    def masked_covariance2(self, masked_X, lamb):
+        return multivariate_normal((np.dot(masked_X, masked_X.T) + np.ones((self.N, self.N))) / lamb + np.eye(self.N))
 
     def log_marg_like(self, gamma, gamma0, nu, lamb):
-        """
-        Compute (or return the pre-computed) log marginal likelihood.
-        """
-        return sps.multivariate_normal(cov=self.masked_covariance(gamma, gamma0, lamb)/nu).logpdf(self.Y)
+        return self.masked_covariance(gamma, gamma0, lamb).logpdf(self.Y, precision_multiplier=nu)
 
     def log_joint(self):
         return sum([
@@ -124,7 +137,7 @@ class ProbitSS(object):
             self._gamma0_distribution.logpdf(self.gamma0),
             self._nu_distribution.logpdf(self.nu),
             self._lambda_distribution.logpdf(self.lamb),
-            sps.multivariate_normal(cov=self.get_covariance()).logpdf(self.gamma),
+            self.get_covariance(self.xi).logpdf(self.gamma),
             self._xi_distribution.logpdf(self.xi) if self.sample_xi else 0.0
         ])
 
@@ -170,7 +183,7 @@ class ProbitSS(object):
         def slice_fn(gamma):
             return self.log_marg_like(gamma, self.gamma0, self.nu, self.lamb)
 
-        self.gamma = elliptical_slice(self.gamma, self.get_cholesky(), slice_fn)
+        self.gamma = elliptical_slice(self.gamma, self.get_covariance(self.xi).chol, slice_fn)
 
     def update_nu(self):
         r"""
@@ -193,9 +206,9 @@ class ProbitSS(object):
         """
         cov = self.masked_covariance(self.gamma, self.gamma0, self.lamb)
 
-        distance = scipy.spatial.distance.mahalanobis(np.zeros(self.Y.shape), self.Y, np.linalg.inv(cov))
+        distance_sq = cov.maha(self.Y)
         post_a = self.nu_a + 0.5 * self.N
-        post_b = self.nu_b + 0.5 * (distance**2)
+        post_b = self.nu_b + 0.5 * distance_sq
 
         self.nu = npr.gamma(post_a, 1 / post_b)
 
@@ -227,7 +240,7 @@ class ProbitSS(object):
         """
         # Compute the latent whitened variables.
         whitened = spla.solve_triangular(
-            self.get_cholesky(), self.gamma, lower=True, trans=0, check_finite=self.check_finite
+            self.get_covariance(self.xi).chol, self.gamma, lower=True, trans=0, check_finite=self.check_finite
         )
 
         # Construct the slice sampling function.
@@ -236,7 +249,7 @@ class ProbitSS(object):
                 return -np.inf
 
             try:
-                chol_cov = spla.cholesky(self.get_covariance(xi), lower=True, check_finite=self.check_finite)
+                chol_cov = self.get_covariance(np.float64(xi)).chol
             except np.linalg.linalg.LinAlgError:
                 return -np.inf
 
@@ -245,4 +258,4 @@ class ProbitSS(object):
             return self.log_marg_like(gamma, self.gamma0, self.nu, self.lamb) + self._xi_distribution.logpdf(xi)
 
         self.xi = slice_sample(self.xi, slice_fn)
-        self.gamma = np.dot(self.get_cholesky(), whitened)
+        self.gamma = np.dot(self.get_covariance(self.xi).chol, whitened)
