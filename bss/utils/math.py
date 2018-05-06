@@ -32,8 +32,9 @@ class multivariate_normal_frozen(object):
         if mean is None:
             mean = np.zeros(self.d)
         self._dist = multivariate_normal_gen()
-        self.mean, self.cov = mean, cov
-        self.cov_info = _PD(self.cov, min_eigenval=min_eigenval, jitter=jitter, lower=True, check_finite=True)
+        self.mean = mean
+        self.cov_info = _PD(cov, min_eigenval=min_eigenval, jitter=jitter, lower=True, check_finite=True)
+        self.cov = self.cov_info.M
 
     @property
     def chol(self):
@@ -73,6 +74,7 @@ class _PD(object):
 
         # Initialize the eagerly precomputed attributes.
         self.rank = M.shape[0]  # todo: do this properly!
+        self.M = M
         self.chol = chol
         self.log_pdet = 2 * np.sum(np.log(np.diag(chol)))
 

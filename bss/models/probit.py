@@ -1,5 +1,5 @@
 import operator
-from cachetools import cached, cachedmethod, Cache
+from cachetools import cachedmethod, Cache
 import numpy as np
 import numpy.random as npr
 import scipy.linalg as spla
@@ -9,9 +9,10 @@ from bss import logger
 from bss.utils.mcmc import elliptical_slice, slice_sample
 from bss.utils.math import multivariate_normal
 
+d = {}
 
 class Probit(object):
-    def __init__(self, X, Y, R, target_sparsity=0.01, gamma0_v=1.0, lamb_a=1e-6, lamb_b=1e-6, nu_a=1e-6, nu_b=1e-6,
+    def __init__(self, X, Y, R, target_sparsity=0.01, gamma0_v=1.0, lambda_params=(1e-6, 1e-6), nu_a=1e-6, nu_b=1e-6,
                  xi=0.999999, xi_prior_shape=(1, 1), check_finite=True, min_eigenval=0, jitter=1e-6):
         r"""
         The Probit model used for our modeling for sparse regression using a Gaussian field.
@@ -30,10 +31,8 @@ class Probit(object):
             around 1% of total SNPs are expected be included in our model. This value affects the probit threshold
             gamma_0 of the model.
         :param gamma0_v: Variance of the probit threshold gamma_0
-        :param lamb_a: Shape parameter of the gamma prior placed on the model parameter
-            lambda, where lambda is the inverse squared global scale parameter for the regression weights.
-        :param lamb_b: Inverse-scale parameter of the gamma prior placed on the model parameter
-            lambda, where lambda is the inverse squared global scale parameter for the regression weights.
+        :param lambda_params: Shape parameter and Inverse-scale parameter of the gamma prior placed on the model
+            parameter lambda, where lambda is the inverse squared global scale parameter for the regression weights.
         :param nu_a: Shape parameter of the gamma prior placed on the model parameter
             nu, where nu is the residual precision.
         :param nu_b: Inverse-scale parameter of the gamma prior placed on the model parameter
@@ -57,7 +56,7 @@ class Probit(object):
         """
         self.X = X
         self.Y = Y
-        self.R = R
+        self.R = multivariate_normal(cov=R, min_eigenval=min_eigenval, jitter=jitter)
 
         self.N, self.P = self.X.shape
 
@@ -76,56 +75,35 @@ class Probit(object):
         # Initialize scalar model distributions and the parameter values to their prior means.
         self._gamma0_distribution = sps.norm(loc=sps.norm.ppf(1.0 - target_sparsity), scale=gamma0_v)
         self.gamma0 = self._gamma0_distribution.mean()
-        self._lambda_distribution = sps.gamma(lamb_a, scale=1./lamb_b)
+        self._lambda_distribution = sps.gamma(lambda_params[0], scale=1./lambda_params[1])
         self.lamb = self._lambda_distribution.mean()
         self._nu_distribution = sps.gamma(self.nu_a, scale=1./self.nu_b)
         self.nu = self._nu_distribution.mean()
 
-        self._bend_matrix(min_eigenval, jitter)
-        self.cov = multivariate_normal(cov=R, min_eigenval=min_eigenval, jitter=jitter)
+        # Caches for holding multivariate normal distributions of our model covariance matrix,
+        # possibly adjusted by a shrinkage factor. A single iteration of MCMC calls on many computations on this
+        # distribution, so caching improves performance significantly. A small cache size works as well as a large one,
+        # because the most recently used distribution tends to be used repeatedly in a single MCMC step.
+        self._covariance_cache = Cache(maxsize=4)
+
+        # A cache similar to the one above, but used to hold the covariance matrics of features 'masked'
+        # for a given probit threshold.
+        # TODO: complete writeup.
+        self._masked_covariance_cache = Cache(maxsize=8)
 
         # Initialize the sparsity function.
         self.gamma = self.get_covariance(self.xi).rvs()
 
-        self.cache = Cache(maxsize=1)
+    def _cache_key(self, *args):
+        return hash(tuple(hash(arg.data.tobytes()) if isinstance(arg, np.ndarray) else arg for arg in args))
 
-
-    def _bend_matrix(self, min_eigenval=0, jitter=1e-6):
-        # Make the correlation matrix positive definite and normalized.
-        # This also guarantees that there are ones along the diagonal.
-
-        # spla.eigh returns vector D and matrix V such that R = V*diag(D)*V'.
-        evals, evecs = spla.eigh(self.R, check_finite=self.check_finite)
-        evals[evals < min_eigenval] = min_eigenval
-        self.R = np.dot(evecs, np.dot(np.diag(evals), evecs.T))
-
-        # Add jitter and renormalize.
-        self.R = self.R + jitter * np.eye(self.P)
-        diagR = np.diag(self.R)[:, np.newaxis]
-        self.R = self.R / np.sqrt(diagR * diagR.T)
-
-    # @cached(cache={})
+    @cachedmethod(cache=operator.attrgetter('_covariance_cache'), key=_cache_key)
     def get_covariance(self, xi):
-        x1 = multivariate_normal(cov=(xi * self.R) + (1.0 - xi) * np.eye(self.P))
-        x2 = multivariate_normal(cov=(xi * self.cov.cov) + (1.0 - xi) * np.eye(self.P))
-        assert(np.allclose(x1.cov, x2.cov))
-        return x2
+        return multivariate_normal(cov=(xi * self.R.cov) + (1.0 - xi) * np.eye(self.P))
 
+    @cachedmethod(cache=operator.attrgetter('_masked_covariance_cache'), key=_cache_key)
     def masked_covariance(self, gamma, gamma0, lamb):
         masked_X = self.X[:, gamma > gamma0]
-        return self.masked_covariance2(masked_X, lamb)
-
-    def mykey(self, *args):
-        key = []
-        for arg in args:
-            if isinstance(arg, np.ndarray):
-                key.append(hash(arg.data.tobytes()))
-            else:
-                key.append(arg)
-        return tuple(key)
-
-    @cachedmethod(cache=operator.attrgetter('cache'), key=mykey)
-    def masked_covariance2(self, masked_X, lamb):
         return multivariate_normal((np.dot(masked_X, masked_X.T) + np.ones((self.N, self.N))) / lamb + np.eye(self.N))
 
     def log_marg_like(self, gamma, gamma0, nu, lamb):
@@ -185,6 +163,7 @@ class Probit(object):
 
         self.gamma = elliptical_slice(self.gamma, self.get_covariance(self.xi).chol, slice_fn)
 
+    # noinspection PyPackageRequirements
     def update_nu(self):
         r"""
         The scalar nu determines the precision of the residual Gaussian noise of the response variables.
@@ -249,7 +228,7 @@ class Probit(object):
                 return -np.inf
 
             try:
-                chol_cov = self.get_covariance(np.float64(xi)).chol
+                chol_cov = self.get_covariance(xi).chol
             except np.linalg.linalg.LinAlgError:
                 return -np.inf
 
