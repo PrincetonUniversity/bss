@@ -12,6 +12,14 @@ bss\.utils\.data module
     :undoc-members:
     :show-inheritance:
 
+bss\.utils\.math module
+-----------------------
+
+.. automodule:: bss.utils.math
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 bss\.utils\.mcmc module
 -----------------------
 

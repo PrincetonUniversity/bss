@@ -6,10 +6,11 @@ import scipy.linalg as spla
 import scipy.stats as sps
 
 from bss import logger
-from bss.utils.mcmc import elliptical_slice, slice_sample
 from bss.utils.math import multivariate_normal
+# Exponential-Expansion slice sampling is used to update gamma0 and lambda (and xi if we're sampling it);
+# Elliptical Slice Sampling is used to update gamma. Nu is updated analytically.
+from bss.utils.mcmc import slice_sample, elliptical_slice_sample
 
-d = {}
 
 class Probit(object):
     def __init__(self, X, Y, R, target_sparsity=0.01, gamma0_v=1.0, lambda_params=(1e-6, 1e-6), nu_a=1e-6, nu_b=1e-6,
@@ -80,42 +81,89 @@ class Probit(object):
         self._nu_distribution = sps.gamma(self.nu_a, scale=1./self.nu_b)
         self.nu = self._nu_distribution.mean()
 
-        # Caches for holding multivariate normal distributions of our model covariance matrix,
-        # possibly adjusted by a shrinkage factor. A single iteration of MCMC calls on many computations on this
-        # distribution, so caching improves performance significantly. A small cache size works as well as a large one,
+        # Cache for holding probit prior distributions (multivariate normal distributions with 0 mean and known
+        # covariance, possibly adjusted by a shrinkage factor xi expressing our confidence in the covariance).
+        # A single iteration of MCMC calls on many computations on this distribution, so caching improves performance
+        # significantly. A small cache size works just as well as a large one,
         # because the most recently used distribution tends to be used repeatedly in a single MCMC step.
-        self._covariance_cache = Cache(maxsize=4)
+        self._probit_cache = Cache(maxsize=4)
 
-        # A cache similar to the one above, but used to hold the covariance matrics of features 'masked'
-        # for a given probit threshold.
-        # TODO: complete writeup.
-        self._masked_covariance_cache = Cache(maxsize=8)
+        # A cache used to hold the marginal PPI (Posterior Probability of Inclusion) distributions
+        # p(y | X, gamma, gamma_0, nu, lambda) ~ Normal(..)
+        self._ppi_cache = Cache(maxsize=8)
 
-        # Initialize the sparsity function.
-        self.gamma = self.get_covariance(self.xi).rvs()
+        # Initialize the sparsity function by generating a random variate from
+        self.gamma = self.probit_distribution(self.xi).rvs()
 
     def _cache_key(self, *args):
         return hash(tuple(hash(arg.data.tobytes()) if isinstance(arg, np.ndarray) else arg for arg in args))
 
-    @cachedmethod(cache=operator.attrgetter('_covariance_cache'), key=_cache_key)
-    def get_covariance(self, xi):
+    @cachedmethod(cache=operator.attrgetter('_probit_cache'), key=_cache_key)
+    def probit_distribution(self, xi):
         return multivariate_normal(cov=(xi * self.R.cov) + (1.0 - xi) * np.eye(self.P))
 
-    @cachedmethod(cache=operator.attrgetter('_masked_covariance_cache'), key=_cache_key)
-    def masked_covariance(self, gamma, gamma0, lamb):
-        masked_X = self.X[:, gamma > gamma0]
-        return multivariate_normal((np.dot(masked_X, masked_X.T) + np.ones((self.N, self.N))) / lamb + np.eye(self.N))
+    @cachedmethod(cache=operator.attrgetter('_ppi_cache'), key=_cache_key)
+    def ppi_distribution(self, gamma, gamma0, lamb):
+        """
+        We're interested in the posterior probability of inclusion:
 
-    def log_marg_like(self, gamma, gamma0, nu, lamb):
-        return self.masked_covariance(gamma, gamma0, lamb).logpdf(self.Y, precision_multiplier=nu)
+            .. math::
+                p(y|X,\gamma,\gamma_0,\\nu,\lambda)
+
+        marginalizing out the effect size captured by :math:`\\beta`:
+
+            .. math::
+                \\beta | \\nu,\lambda,\Gamma \propto \mathcal{N}(0, (\\nu\lambda)^{-1}\Gamma)
+
+        The degenerate Gaussian form of the :math:`\\beta` prior above (note that the covariance matrix :math:`\Gamma`
+        is a diagonal matrix of indicator values) allows us to perform this marginalization in closed form:
+
+            .. math::
+                p(y|X,\gamma,\gamma_0,\\nu,\lambda)
+
+                = \int \int \mathcal{N} (y|\\beta_01_n + X\\beta,\\nu^{-1}I_n \;
+                \mathcal{N} (\\beta|0, (\\nu\lambda)^{-1}\Gamma)) \;
+                \mathcal{N}(\\beta_0|0,(\\nu\lambda)^{-1}) \; d\\beta d\\beta_0
+
+                = \int \mathcal{N} (y|\\beta_0 1_n, \\nu^{-1}(\lambda^{-1}X\Gamma X^T + I_n)) \;
+                \mathcal{N}(\\beta_0 | 0, (\\nu\lambda)^{-1}) d\\beta_0
+
+                = \mathcal{N} (y|0, \\nu^{-1} \lambda^{-1}(1_n1_n^T + X\Gamma X^T) + I_n))
+
+        :param gamma:
+        :param gamma0:
+        :param lamb:
+        :return:
+        """
+
+        # The natural way to implement this would be:
+        #
+        # indicator_matrix = np.diag(gamma > gamma0)
+        # result = multivariate_normal(
+        #     (self.X.dot(indicator_matrix).dot(self.X.T) + np.ones((self.N, self.N))) / lamb
+        #     + np.eye(self.N)
+        # )
+        #
+        # However:
+        #   X * indicator_matrix * X.T
+        # is an expensive matrix multiplication, which can be avoided by first taking the columns of X that are above
+        # the probit threshold gamma0, and then simply taking the square of that masked matrix:
+        #   X = X[:, gamma > gamma0]
+        #   X * X.T
+
+        X = self.X[:, gamma > gamma0]
+        return multivariate_normal((np.dot(X, X.T) + np.ones((self.N, self.N))) / lamb + np.eye(self.N))
+
+    def log_marg_like(self, gamma, gamma0, lamb, nu):
+        return self.ppi_distribution(gamma, gamma0, lamb).logpdf(self.Y, precision_multiplier=nu)
 
     def log_joint(self):
         return sum([
-            self.log_marg_like(self.gamma, self.gamma0, self.nu, self.lamb),
+            self.log_marg_like(self.gamma, self.gamma0, self.lamb, self.nu),
             self._gamma0_distribution.logpdf(self.gamma0),
             self._nu_distribution.logpdf(self.nu),
             self._lambda_distribution.logpdf(self.lamb),
-            self.get_covariance(self.xi).logpdf(self.gamma),
+            self.probit_distribution(self.xi).logpdf(self.gamma),
             self._xi_distribution.logpdf(self.xi) if self.sample_xi else 0.0
         ])
 
@@ -144,6 +192,7 @@ class Probit(object):
             return np.mean(inclusion_trace, 0), inclusion_trace[np.argmax(logpost_trace), :]
 
     def _update_parameters(self):
+        # We update gamma, gamma0, lambda and nu in turn (Bottolo et al, 2011)
         self._update_gamma()
         self._update_gamma0()
         self._update_lambda()
@@ -159,9 +208,9 @@ class Probit(object):
 
         # Construct the log likelihood for elliptical slice sampling.
         def slice_fn(gamma):
-            return self.log_marg_like(gamma, self.gamma0, self.nu, self.lamb)
+            return self.log_marg_like(gamma, self.gamma0, self.lamb, self.nu)
 
-        self.gamma = elliptical_slice(self.gamma, self.get_covariance(self.xi).chol, slice_fn)
+        self.gamma = elliptical_slice_sample(self.gamma, self.probit_distribution(self.xi).chol, slice_fn)
 
     # noinspection PyPackageRequirements
     def update_nu(self):
@@ -183,9 +232,9 @@ class Probit(object):
         This function thus updates the value of nu using this analytical approach, by updating the parameters
         of the gamma distribution and then drawing a sample from it.
         """
-        cov = self.masked_covariance(self.gamma, self.gamma0, self.lamb)
+        ppi_distribution = self.ppi_distribution(self.gamma, self.gamma0, self.lamb)
 
-        distance_sq = cov.maha(self.Y)
+        distance_sq = ppi_distribution.maha(self.Y)
         post_a = self.nu_a + 0.5 * self.N
         post_b = self.nu_b + 0.5 * distance_sq
 
@@ -199,7 +248,7 @@ class Probit(object):
         def slice_fn(lamb):
             if lamb < 0:
                 return -np.inf
-            return self.log_marg_like(self.gamma, self.gamma0, self.nu, lamb) + self._lambda_distribution.logpdf(lamb)
+            return self.log_marg_like(self.gamma, self.gamma0, lamb, self.nu) + self._lambda_distribution.logpdf(lamb)
 
         self.lamb = slice_sample(self.lamb, slice_fn, verbose=False)
 
@@ -209,7 +258,7 @@ class Probit(object):
         """
 
         def slice_fn(gamma0):
-            return self.log_marg_like(self.gamma, gamma0, self.nu, self.lamb) + self._gamma0_distribution.logpdf(gamma0)
+            return self.log_marg_like(self.gamma, gamma0, self.lamb, self.nu) + self._gamma0_distribution.logpdf(gamma0)
 
         self.gamma0 = slice_sample(self.gamma0, slice_fn, step_out=True)
 
@@ -219,7 +268,7 @@ class Probit(object):
         """
         # Compute the latent whitened variables.
         whitened = spla.solve_triangular(
-            self.get_covariance(self.xi).chol, self.gamma, lower=True, trans=0, check_finite=self.check_finite
+            self.probit_distribution(self.xi).chol, self.gamma, lower=True, trans=0, check_finite=self.check_finite
         )
 
         # Construct the slice sampling function.
@@ -228,13 +277,13 @@ class Probit(object):
                 return -np.inf
 
             try:
-                chol_cov = self.get_covariance(xi).chol
+                chol_cov = self.probit_distribution(xi).chol
             except np.linalg.linalg.LinAlgError:
                 return -np.inf
 
             gamma = np.dot(chol_cov, whitened)
 
-            return self.log_marg_like(gamma, self.gamma0, self.nu, self.lamb) + self._xi_distribution.logpdf(xi)
+            return self.log_marg_like(gamma, self.gamma0, self.lamb, self.nu) + self._xi_distribution.logpdf(xi)
 
         self.xi = slice_sample(self.xi, slice_fn)
-        self.gamma = np.dot(self.get_covariance(self.xi).chol, whitened)
+        self.gamma = np.dot(self.probit_distribution(self.xi).chol, whitened)

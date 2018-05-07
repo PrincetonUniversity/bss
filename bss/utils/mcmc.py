@@ -6,7 +6,7 @@ def acf(x, length=50):
     return np.array([1] + [np.corrcoef(x[:-i], x[i:])[0, 1] for i in range(1, length)])
 
 
-def elliptical_slice(xx, chol_sigma, log_like_fn):
+def elliptical_slice_sample(xx, chol_sigma, log_like_fn):
     D = xx.size
 
     # Select a random ellipse.
@@ -57,6 +57,19 @@ def uni_slice_sample(init_x, logprob, lower, upper):
 
 def slice_sample(init_x, logprob, sigma=1.0, step_out=True, max_steps_out=1000,
                  compwise=True, doubling_step=True, verbose=False):
+    """
+    Exponential-Expansion slice sampling (Radford Neal 2003)
+
+    :param init_x:
+    :param logprob:
+    :param sigma:
+    :param step_out:
+    :param max_steps_out:
+    :param compwise:
+    :param doubling_step:
+    :param verbose:
+    :return:
+    """
     def direction_slice(direction, init_x):
         def dir_logprob(z):
             return logprob(direction * z + init_x)
