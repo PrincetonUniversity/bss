@@ -1,11 +1,3 @@
-"""
-The implementations are based on the following publication:
-
-.. [Bansal2005] "Bayesian Structured Sparsity from Gaussian Fields",
-   Barbara E. Engelhardt, Ryan P. Adams
-   https://arxiv.org/abs/1407.2235
-"""
-
 __version__ = '0.0.2'
 
 import os.path

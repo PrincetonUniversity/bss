@@ -20,10 +20,10 @@ bss\.utils\.math module
     :undoc-members:
     :show-inheritance:
 
-bss\.utils\.mcmc module
------------------------
+bss\.utils\.samplers module
+---------------------------
 
-.. automodule:: bss.utils.mcmc
+.. automodule:: bss.utils.samplers
     :members:
     :undoc-members:
     :show-inheritance:

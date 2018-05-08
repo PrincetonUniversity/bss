@@ -1,34 +1,35 @@
+"""
+Sampling functions used to update parameters for the Probit model.
+"""
+
 import numpy as np
 import numpy.random as npr
 
 
-def acf(x, length=50):
-    return np.array([1] + [np.corrcoef(x[:-i], x[i:])[0, 1] for i in range(1, length)])
+def elliptical_slice_sample(current_state, normal_dist, log_like_fn):
+    """
+    Elliptical Slice Sampling algorithm as outlined in :cite:`Murray2010`.
 
+    :param current_state: A d-dimensional vector of latent variables, representing the current state,
+     drawn from a normal distribution represented by normal_dist
+    :param normal_dist: Object representing the normal distribution that current_state is sampled from.
+     This object needs to be able to supply a d-dimensional variate through an rvs() method.
+     The Mvn class provided in the bss module works for this purpose.
+    :param log_like_fn: Log Likelihood function that takes in a single argument, a d-dimensional vector representing
+     a state, and returns a scalar log-likelihood value
+    :return: The new state (d-dimensional) after the sampling step
+    """
+    nu = normal_dist.rvs()
+    threshold = np.log(npr.rand()) + log_like_fn(current_state)
 
-def elliptical_slice_sample(xx, chol_sigma, log_like_fn):
-    D = xx.size
-
-    # Select a random ellipse.
-    nu = np.dot(chol_sigma, npr.randn(D))
-
-    # Select the slice threshold.
-    hh = np.log(npr.rand()) + log_like_fn(xx)
-
-    # Randomly center the bracket.
-    phi = npr.rand() * 2 * np.pi
+    phi = npr.rand() * 2*np.pi
     phi_max = phi
-    phi_min = phi_max - 2 * np.pi
+    phi_min = phi_max - 2*np.pi
 
-    # Loop until acceptance.
     while True:
-
-        # Compute the proposal.
-        xx_prop = xx * np.cos(phi) + nu * np.sin(phi)
-
-        # If on the slice, return the proposal.
-        if log_like_fn(xx_prop) > hh:
-            return xx_prop
+        new_state = current_state * np.cos(phi) + nu * np.sin(phi)
+        if log_like_fn(new_state) > threshold:
+            return new_state
 
         if phi > 0:
             phi_max = phi
@@ -40,25 +41,11 @@ def elliptical_slice_sample(xx, chol_sigma, log_like_fn):
         phi = npr.rand() * (phi_max - phi_min) + phi_min
 
 
-def uni_slice_sample(init_x, logprob, lower, upper):
-    llh_s = np.log(npr.rand()) + logprob(init_x)
-    while True:
-        new_x = npr.rand() * (upper - lower) + lower
-        new_llh = logprob(new_x)
-        if new_llh > llh_s:
-            return new_x
-        elif new_x < init_x:
-            lower = new_x
-        elif new_x > init_x:
-            upper = new_x
-        else:
-            raise Exception("Slice sampler shrank to zero!")
-
-
 def slice_sample(init_x, logprob, sigma=1.0, step_out=True, max_steps_out=1000,
                  compwise=True, doubling_step=True, verbose=False):
     """
-    Exponential-Expansion slice sampling (Radford Neal 2003)
+    Exponential-Expansion slice sampling as per :cite:`Neal2003`
+    TODO: Complete writeup
 
     :param init_x:
     :param logprob:

@@ -1,22 +1,18 @@
 import operator
 from cachetools import cachedmethod, Cache
 import numpy as np
-import numpy.random as npr
-import scipy.linalg as spla
-import scipy.stats as sps
+from scipy.stats import beta, gamma, norm
 
 from bss import logger
 from bss.utils.math import multivariate_normal
-# Exponential-Expansion slice sampling is used to update gamma0 and lambda (and xi if we're sampling it);
-# Elliptical Slice Sampling is used to update gamma. Nu is updated analytically.
-from bss.utils.mcmc import slice_sample, elliptical_slice_sample
+from bss.utils.samplers import slice_sample, elliptical_slice_sample
 
 
 class Probit(object):
     def __init__(self, X, Y, R, target_sparsity=0.01, gamma0_v=1.0, lambda_params=(1e-6, 1e-6), nu_a=1e-6, nu_b=1e-6,
                  xi=0.999999, xi_prior_shape=(1, 1), check_finite=True, min_eigenval=0, jitter=1e-6):
         r"""
-        The Probit model used for our modeling for sparse regression using a Gaussian field.
+        The Probit model used for modeling Sparse Regression using a Gaussian field. :cite:`Engelhardt2014`.
 
         .. math::
 
@@ -40,11 +36,12 @@ class Probit(object):
             nu, where nu is the residual precision.
         :param xi: The shrinkage constant in the interval [0,1] to regularize the covariance matrix towards the
             identity matrix. This ensures that the covariance matrix is positive definite.
+            A larger xi value biases our estimate towards the supplied R matrix, a lower value biases it towards the
+            identity matrix.
             If None, then xi is sampled from a beta distribution with shape parameters specified by the tuple
             xi_prior_shape.
         :param xi_prior_shape: Shape parameters of the beta prior placed on the model parameter xi, specified as a
-            2-tuple of real values. xi is the shrinkage constant to regularize the covariance matrix towards the
-            identity matrix. This ensures that the covariance matrix is positive definite.
+            2-tuple of real values.
             This argument is ignored and xi is not sampled, if it is specified explicitly using the xi parameter.
         :param check_finite: Whether to check that the input matrices contain only finite numbers.
             Disabling may give a performance gain, but may result in problems
@@ -67,18 +64,18 @@ class Probit(object):
 
         if xi is None:
             self.sample_xi = True
-            self._xi_distribution = sps.beta(*xi_prior_shape)
+            self._xi_distribution = beta(*xi_prior_shape)
             self.xi = self._xi_distribution.mean()
         else:
             self.sample_xi = False
             self.xi = xi
 
         # Initialize scalar model distributions and the parameter values to their prior means.
-        self._gamma0_distribution = sps.norm(loc=sps.norm.ppf(1.0 - target_sparsity), scale=gamma0_v)
+        self._gamma0_distribution = norm(loc=norm.ppf(1.0 - target_sparsity), scale=gamma0_v)
         self.gamma0 = self._gamma0_distribution.mean()
-        self._lambda_distribution = sps.gamma(lambda_params[0], scale=1./lambda_params[1])
+        self._lambda_distribution = gamma(lambda_params[0], scale=1./lambda_params[1])
         self.lamb = self._lambda_distribution.mean()
-        self._nu_distribution = sps.gamma(self.nu_a, scale=1./self.nu_b)
+        self._nu_distribution = gamma(self.nu_a, scale=1./self.nu_b)
         self.nu = self._nu_distribution.mean()
 
         # Cache for holding probit prior distributions (multivariate normal distributions with 0 mean and known
@@ -90,9 +87,11 @@ class Probit(object):
 
         # A cache used to hold the marginal PPI (Posterior Probability of Inclusion) distributions
         # p(y | X, gamma, gamma_0, nu, lambda) ~ Normal(..)
+        # A small cache size works just as well as a large one, because the most recently used distribution tends to
+        # be used repeatedly in a single MCMC step.
         self._ppi_cache = Cache(maxsize=8)
 
-        # Initialize the sparsity function by generating a random variate from
+        # Initialize the sparsity function by generating a random variate from the model's probit distribution
         self.gamma = self.probit_distribution(self.xi).rvs()
 
     def _cache_key(self, *args):
@@ -180,7 +179,7 @@ class Probit(object):
                 (i, iters, log_post, self.gamma0, self.lamb, self.nu, self.xi)
             )
 
-            self._update_parameters()
+            self.update_parameters()
 
             if i >= 0:
                 inclusion_trace[i, :] = self.gamma > self.gamma0
@@ -191,30 +190,41 @@ class Probit(object):
         else:
             return np.mean(inclusion_trace, 0), inclusion_trace[np.argmax(logpost_trace), :]
 
-    def _update_parameters(self):
+    def update_parameters(self):
         # We update gamma, gamma0, lambda and nu in turn (Bottolo et al, 2011)
-        self._update_gamma()
-        self._update_gamma0()
-        self._update_lambda()
+        self.update_gamma()
+        self.update_gamma0()
+        self.update_lambda()
         self.update_nu()
         if self.sample_xi:
-            self._update_xi()
+            self.update_xi()
 
-    def _update_gamma(self):
+    def update_gamma(self):
+        r"""
+        Apply MCMC transition operator to model parameter :math:`\gamma`. For updating :math:`\gamma`, we use
+        elliptical slice sampling (ESS) described in :cite:`Murray2010`
+
+        ESS samples efficiently and robustly from latent Gaussian models when significant covariance structure is
+        imposed by the prior, as in the Gaussian processes and the present structured sparsity model.
+
+        ESS generates random elliptical loci using hte Gaussian prior and then searches along these loci to find
+        acceptable points for slice sampling. When the data ar weakly informative and the prior is strong, as is the
+        case here, the elliptical loci effectively captures the dependence between the variables and enable faster
+        mixing. Here, using ESS for :math:`\gamma` enables us to avoid directly sampling over the large discrete
+        space of sparsity patterns that makes unstructured spike-and-slab computationally challenging.
+
+        :return: On return, the :math:`\gamma` parameter of the model has been updated using a new sample.
         """
-        Apply MCMC transition operator to the function gamma.
-        This is performed with an iteration of elliptical slice sampling.
-        """
+        self.gamma = elliptical_slice_sample(
+            current_state=self.gamma,
+            normal_dist=self.probit_distribution(self.xi),
+            log_like_fn=lambda gamma: self.log_marg_like(gamma, self.gamma0, self.lamb, self.nu)
+        )
 
-        # Construct the log likelihood for elliptical slice sampling.
-        def slice_fn(gamma):
-            return self.log_marg_like(gamma, self.gamma0, self.lamb, self.nu)
-
-        self.gamma = elliptical_slice_sample(self.gamma, self.probit_distribution(self.xi).chol, slice_fn)
-
-    # noinspection PyPackageRequirements
     def update_nu(self):
         r"""
+        Apply MCMC transition operator to model parameter :math:`\nu`, the residual precision.
+
         The scalar nu determines the precision of the residual Gaussian noise of the response variables.
         With the choice of a conjugate gamma prior distribution, the conditional posterior is also gamma:
 
@@ -229,8 +239,7 @@ class Probit(object):
 
             b_\nu^{(n)} = b_\nu + \frac{1}{2} y^T (\lambda^{-1} (1_n 1_n^T + X \Gamma X^T) + I_n)^{-1} y
 
-        This function thus updates the value of nu using this analytical approach, by updating the parameters
-        of the gamma distribution and then drawing a sample from it.
+        :return: On return, the :math:`\nu` parameter of the model has been updated using this analytical approach.
         """
         ppi_distribution = self.ppi_distribution(self.gamma, self.gamma0, self.lamb)
 
@@ -238,13 +247,18 @@ class Probit(object):
         post_a = self.nu_a + 0.5 * self.N
         post_b = self.nu_b + 0.5 * distance_sq
 
-        self.nu = npr.gamma(post_a, 1 / post_b)
+        self.nu = np.random.gamma(post_a, 1 / post_b)
 
-    def _update_lambda(self):
-        """
-        Apply MCMC transition operator to the global weight inverse-scale parameter.
-        """
+    def update_lambda(self):
+        r"""
+        Apply MCMC transition operator to model parameter :math:`\lambda`, the global weight inverse-scale parameter.
 
+        The parameter :math:`\lambda` determines the scale of the "slab" portion of the weight prior. The conditional
+        density of :math:`\lambda` does not have a simple closed form, but can be efficiently sampled using the
+        exponential-expansion slice sampling algorithm described in :cite:`Neal2003`
+
+        :return: On return, the :math:`\lambda` parameter of the model has been updated using a new sample.
+        """
         def slice_fn(lamb):
             if lamb < 0:
                 return -np.inf
@@ -252,38 +266,43 @@ class Probit(object):
 
         self.lamb = slice_sample(self.lamb, slice_fn, verbose=False)
 
-    def _update_gamma0(self):
-        """
-        Apply MCMC transition operator to the sparsity threshold.
-        """
+    def update_gamma0(self):
+        r"""
+        Apply MCMC transition operator to the model parameter :math:`\gamma_0`, the sparsity threshold.
 
+        The parameter :math:`\gamma_0` spcifies the probit threshold and, conditioned on :math:`\gamma`, it determines
+        which entries on the diagonal of :math:`\Gamma` are zero and which are one. The conditional
+        density of :math:`\gamma_0` does not have a simple closed form, but can be efficiently sampled using the
+        exponential-expansion slice sampling algorithm described in :cite:`Neal2003`
+
+        :return: On return, the :math:`\gamma_0` parameter of the model has been updated using a new sample.
+        """
         def slice_fn(gamma0):
             return self.log_marg_like(self.gamma, gamma0, self.lamb, self.nu) + self._gamma0_distribution.logpdf(gamma0)
 
         self.gamma0 = slice_sample(self.gamma0, slice_fn, step_out=True)
 
-    def _update_xi(self):
-        """
-        Apply MCMC transition operator to the correlation exponent.
-        """
-        # Compute the latent whitened variables.
-        whitened = spla.solve_triangular(
-            self.probit_distribution(self.xi).chol, self.gamma, lower=True, trans=0, check_finite=self.check_finite
-        )
+    def update_xi(self):
+        r"""
+        Apply MCMC transition operator to the shrinkage factor :math:`\xi`, used to regularize the covariance matrix
+        towards the identity matrix.
 
-        # Construct the slice sampling function.
+        :return: On return, the :math:`\xi` parameter of the model has been updated using a new sample.
+        """
+
+        # Compute the latent whitened variables.
+        whitened = self.probit_distribution(self.xi).solve(self.gamma)
+
         def slice_fn(xi):
             if xi <= 0 or xi >= 1:
                 return -np.inf
 
             try:
-                chol_cov = self.probit_distribution(xi).chol
+                gamma = self.probit_distribution(xi).dot(whitened)
             except np.linalg.linalg.LinAlgError:
                 return -np.inf
-
-            gamma = np.dot(chol_cov, whitened)
-
-            return self.log_marg_like(gamma, self.gamma0, self.lamb, self.nu) + self._xi_distribution.logpdf(xi)
+            else:
+                return self.log_marg_like(gamma, self.gamma0, self.lamb, self.nu) + self._xi_distribution.logpdf(xi)
 
         self.xi = slice_sample(self.xi, slice_fn)
-        self.gamma = np.dot(self.probit_distribution(self.xi).chol, whitened)
+        self.gamma = self.probit_distribution(self.xi).dot(whitened)

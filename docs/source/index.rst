@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 BSS (Bayesian Structured Sparsity) documentation
-===============================
+================================================
 
 Companion code for the paper
 
@@ -36,9 +36,9 @@ computational tractability.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Modules:
 
-
+   modules
 
 
 Indices and tables
@@ -47,3 +47,9 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+References
+==========
+
+.. bibliography:: references.bib

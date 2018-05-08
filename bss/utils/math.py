@@ -6,7 +6,6 @@ _LOG_2PI = np.log(2 * np.pi)
 
 
 class multivariate_normal_gen(object):
-
     def __call__(self, *args, **kwargs):
         return multivariate_normal_frozen(*args, **kwargs)
 
@@ -20,20 +19,16 @@ class multivariate_normal_gen(object):
         maha = self._maha(x, mean, chol, precision_multiplier)
         return -0.5 * (rank * (_LOG_2PI - np.log(precision_multiplier)) + log_det_cov + maha)
 
-    def logpdf(self, x, cov, mean=None):
-        pd = _PD(cov)
-        raise NotImplementedError('bah')
-        # return self._logpdf(x, mean, pd.chol, pd.log_pdet, pd.rank)
-
 
 class multivariate_normal_frozen(object):
-    def __init__(self, cov, mean=None, min_eigenval=None, jitter=None):
+    def __init__(self, cov, mean=None, min_eigenval=None, jitter=None, check_finite=True):
         self.d = cov.shape[0]
         if mean is None:
             mean = np.zeros(self.d)
         self._dist = multivariate_normal_gen()
         self.mean = mean
-        self.cov_info = _PD(cov, min_eigenval=min_eigenval, jitter=jitter, lower=True, check_finite=True)
+        self.check_finite = check_finite
+        self.cov_info = _PD(cov, min_eigenval=min_eigenval, jitter=jitter, lower=True, check_finite=check_finite)
         self.cov = self.cov_info.M
 
     @property
@@ -48,6 +43,12 @@ class multivariate_normal_frozen(object):
 
     def logpdf(self, x, precision_multiplier=1):
         return self._dist._logpdf(x, self.mean, self.cov_info.chol, self.cov_info.log_pdet, self.d, precision_multiplier)
+
+    def solve(self, x):
+        return scipy.linalg.solve_triangular(self.chol, x, lower=True, trans=0, check_finite=self.check_finite)
+
+    def dot(self, x):
+        return np.dot(self.chol, x)
 
 
 class _PD(object):
@@ -80,17 +81,3 @@ class _PD(object):
 
 
 multivariate_normal = multivariate_normal_gen()
-
-
-if __name__ == '__main__':
-    x = np.load('x.npy')
-    cov = np.load('cov.npy')
-    dist = multivariate_normal(cov=cov)
-    print(dist.chol)
-    res = dist.logpdf(x)
-    print(res)
-    res = dist.logpdf(x)
-    print(res)
-    res = dist.logpdf(x, precision_multiplier=1.1)
-    print(res)
-
