@@ -4,7 +4,7 @@ import numpy as np
 from scipy.stats import beta, gamma, norm
 
 from bss import logger
-from bss.utils.math import multivariate_normal
+from bss.utils.math import multivariate_normal as Mvn
 from bss.utils.samplers import slice_sample, elliptical_slice_sample
 
 
@@ -54,7 +54,7 @@ class Probit(object):
         """
         self.X = X
         self.Y = Y
-        self.R = multivariate_normal(cov=R, min_eigenval=min_eigenval, jitter=jitter)
+        self.R = Mvn(cov=R, min_eigenval=min_eigenval, jitter=jitter)
 
         self.N, self.P = self.X.shape
 
@@ -99,7 +99,7 @@ class Probit(object):
 
     @cachedmethod(cache=operator.attrgetter('_probit_cache'), key=_cache_key)
     def probit_distribution(self, xi):
-        return multivariate_normal(cov=(xi * self.R.cov) + (1.0 - xi) * np.eye(self.P))
+        return Mvn(cov=(xi * self.R.cov) + (1.0 - xi) * np.eye(self.P))
 
     @cachedmethod(cache=operator.attrgetter('_ppi_cache'), key=_cache_key)
     def ppi_distribution(self, gamma, gamma0, lamb):
@@ -138,7 +138,7 @@ class Probit(object):
         # The natural way to implement this would be:
         #
         # indicator_matrix = np.diag(gamma > gamma0)
-        # result = multivariate_normal(
+        # result = Mvn(
         #     (self.X.dot(indicator_matrix).dot(self.X.T) + np.ones((self.N, self.N))) / lamb
         #     + np.eye(self.N)
         # )
@@ -151,7 +151,7 @@ class Probit(object):
         #   X * X.T
 
         X = self.X[:, gamma > gamma0]
-        return multivariate_normal((np.dot(X, X.T) + np.ones((self.N, self.N))) / lamb + np.eye(self.N))
+        return Mvn((np.dot(X, X.T) + np.ones((self.N, self.N))) / lamb + np.eye(self.N))
 
     def log_marg_like(self, gamma, gamma0, lamb, nu):
         return self.ppi_distribution(gamma, gamma0, lamb).logpdf(self.Y, precision_multiplier=nu)
@@ -264,7 +264,7 @@ class Probit(object):
                 return -np.inf
             return self.log_marg_like(self.gamma, self.gamma0, lamb, self.nu) + self._lambda_distribution.logpdf(lamb)
 
-        self.lamb = slice_sample(self.lamb, slice_fn, verbose=False)
+        self.lamb = slice_sample(self.lamb, slice_fn)
 
     def update_gamma0(self):
         r"""
@@ -280,7 +280,7 @@ class Probit(object):
         def slice_fn(gamma0):
             return self.log_marg_like(self.gamma, gamma0, self.lamb, self.nu) + self._gamma0_distribution.logpdf(gamma0)
 
-        self.gamma0 = slice_sample(self.gamma0, slice_fn, step_out=True)
+        self.gamma0 = slice_sample(self.gamma0, slice_fn, expand=True)
 
     def update_xi(self):
         r"""

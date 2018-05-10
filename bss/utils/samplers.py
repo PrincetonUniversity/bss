@@ -1,7 +1,7 @@
 """
 Sampling functions used to update parameters for the Probit model.
 """
-
+import numbers
 import numpy as np
 import numpy.random as npr
 
@@ -41,108 +41,135 @@ def elliptical_slice_sample(current_state, normal_dist, log_like_fn):
         phi = npr.rand() * (phi_max - phi_min) + phi_min
 
 
-def slice_sample(init_x, logprob, sigma=1.0, step_out=True, max_steps_out=1000,
-                 compwise=True, doubling_step=True, verbose=False):
+def slice_sample(x0, logprob, w=1.0, expand=True, max_steps_out=1000, compwise=True, doubling_step=True):
     """
     Exponential-Expansion slice sampling as per :cite:`Neal2003`
-    TODO: Complete writeup
 
-    :param init_x:
-    :param logprob:
-    :param sigma:
-    :param step_out:
-    :param max_steps_out:
+    :param x0: The current sample, scalar or d-dimensional
+    :param logprob: A function taking a single sample of the same shape as x0,
+        and returning the log-probability of that sample
+    :param w: estimate of the typical size of a slice
+    :param expand: Whether to expand the slice size, either by linear increments or a doubling process
+    :param max_steps_out: The max. no. of expansion steps to take, either in a single direction (when stepping out in
+        fixed-width increments), or the total max steps in both directions (when stepping out using doubling steps)
     :param compwise:
-    :param doubling_step:
-    :param verbose:
+    :param doubling_step: Whether to use the doubling procedure described to expand the slice size; Useful to expand
+        intervals faster than stepping out in fixed-width increments
     :return:
     """
-    def direction_slice(direction, init_x):
-        def dir_logprob(z):
-            return logprob(direction * z + init_x)
+    def direction_slice(x0, direction):
 
-        def acceptable(z, llh_s, L, U):
-            while (U - L) > 1.1 * sigma:
-                middle = 0.5 * (L + U)
-                splits = (0 < middle <= z) or (z < middle <= 0)
-                if z < middle:
-                    U = middle
+        def dir_logprob(z):
+            # Log-probability value from a sample that is |z| distance away from the d-dimensional point x0, in the
+            # direction specified by the axis-aligned 'direction' (a vector with exactly one 1 and d-1 0s)
+            return logprob(x0 + direction * z)
+
+        def acceptable(x1, llh, L, R):
+            # Test for whether a new point x1 is an acceptable next state, when the interval was found by the
+            # doubling procedure
+            while (R - L) > 1.1 * w:
+                middle = (L + R)/2.
+
+                # Flag to check whether the intervals that would be generated from the new point x1 differ from those
+                # leading to the current point
+                D = (0 < middle <= x1) or (x1 < middle <= 0)
+                if x1 < middle:
+                    R = middle
                 else:
                     L = middle
-                # Probably these could be cached from the stepping out.
-                if splits and llh_s >= dir_logprob(U) and llh_s >= dir_logprob(L):
+
+                # Check that the interval L-R has no ends outside the slice, which would lead to early termination
+                # of the doubling procedure
+                if D and llh >= dir_logprob(L) and llh >= dir_logprob(R):
                     return False
+
             return True
 
-        upper = sigma * npr.rand()
-        lower = upper - sigma
-        llh_s = np.log(npr.rand()) + dir_logprob(0.0)
+        # Note that in our implementation, the "current value" (x0 in Neal2003) is implicitly 0,
+        # since we find out the TODO: ??
 
-        l_steps_out = 0
-        u_steps_out = 0
-        if step_out:
+        # Randomly position the initial interval of width w around 0
+        # This is essential for correctness
+        R = w * npr.rand()
+        L = R - w
+
+        # Log-Likelihood value at TODO: ??
+        llh = np.log(npr.rand()) + dir_logprob(0.0)
+
+        # The no. of "step-out" steps we've taken in the lower and upper directions
+        L_steps_out = R_steps_out = 0
+
+        if expand:
             if doubling_step:
-                while (dir_logprob(lower) > llh_s or dir_logprob(upper) > llh_s) and (
-                        l_steps_out + u_steps_out) < max_steps_out:
+                # Produce a sequence of intervals, each twice the size of the previous one, until and interval is
+                # found with both ends outside the slice, or a predetermined limit on the no. of step-outs has been
+                # reached.
+                while (L_steps_out + R_steps_out) < max_steps_out and (dir_logprob(L) > llh or dir_logprob(R) > llh):
+                    # Note that the two sides are not expanded equally. Instead just one side is expanded, chosen at
+                    # random (irrespective of whether that side is already outside the slice). This is essential to
+                    # the correctness of the method, since it produces a final interval that could have been obtained
+                    # from points other than the current one. :cite:`Neal2003`
                     if npr.rand() < 0.5:
-                        l_steps_out += 1
-                        lower -= (upper - lower)
+                        L_steps_out += 1
+                        L -= (R - L)
                     else:
-                        u_steps_out += 1
-                        upper += (upper - lower)
+                        R_steps_out += 1
+                        R += (R - L)
+            # Simple linear expansion of slice
             else:
-                while dir_logprob(lower) > llh_s and l_steps_out < max_steps_out:
-                    l_steps_out += 1
-                    lower -= sigma
-                while dir_logprob(upper) > llh_s and u_steps_out < max_steps_out:
-                    u_steps_out += 1
-                    upper += sigma
+                # As long as we remain under the plot and haven't exceeded the max. no. of steps
+                # in either direction, keep expanding the slice by increments of w
+                while dir_logprob(L) > llh and L_steps_out < max_steps_out:
+                    L_steps_out += 1
+                    L -= w
+                while dir_logprob(R) > llh and R_steps_out < max_steps_out:
+                    R_steps_out += 1
+                    R += w
 
-        start_upper = upper
-        start_lower = lower
-
+        # Sampling from the part of the slice within the interval
+        # We repeatedly sample uniformly from an interval that is initially equal to R-L, and which shrinks each time
+        # a point is drawn that is not acceptable.
         steps_in = 0
         while True:
             steps_in += 1
-            new_z = (upper - lower) * npr.rand() + lower
-            new_llh = dir_logprob(new_z)
-            if np.isnan(new_llh):
-                print(new_z, direction * new_z + init_x, new_llh, llh_s, init_x, logprob(init_x))
-                raise Exception("Slice sampler got a NaN")
-            if new_llh > llh_s and acceptable(new_z, llh_s, start_lower, start_upper):
+            x1 = L + npr.rand()*(R - L)
+            x1_llh = dir_logprob(x1)
+
+            if x1_llh > llh and acceptable(x1, llh, L, R):
                 break
-            elif new_z < 0:
-                lower = new_z
-            elif new_z > 0:
-                upper = new_z
+            elif x1 < 0:
+                L = x1
+            elif x1 > 0:
+                R = x1
+            elif np.isnan(x1_llh):
+                raise RuntimeError("Slice sampler got a NaN")
             else:
-                raise Exception("Slice sampler shrank to zero!")
+                raise RuntimeError("Slice sampler shrank to zero!")
 
-        if verbose:
-            print("Steps Out:", l_steps_out, u_steps_out, " Steps In:", steps_in)
+        # print("Steps Out:", L_steps_out, R_steps_out, " Steps In:", steps_in)
 
-        return new_z * direction + init_x
+        return x0 + direction * x1
 
-    if type(init_x) == float or isinstance(init_x, np.number):
-        init_x = np.array([init_x])
+    if isinstance(x0, numbers.Number) or isinstance(x0, np.number):
+        x0 = np.array([x0])
         scalar = True
     else:
         scalar = False
 
-    dims = init_x.shape[0]
+    dims = x0.shape[0]
     if compwise:
-        ordering = range(dims)
+        ordering = list(range(dims))
         npr.shuffle(ordering)
-        new_x = init_x.copy()
+        new_x = x0.copy()
         for d in ordering:
             direction = np.zeros(dims)
             direction[d] = 1.0
-            new_x = direction_slice(direction, new_x)
+            new_x = direction_slice(new_x, direction)
 
     else:
         direction = npr.randn(dims)
         direction = direction / np.sqrt(np.sum(direction ** 2))
-        new_x = direction_slice(direction, init_x)
+        new_x = direction_slice(x0, direction)
 
     if scalar:
         return float(new_x[0])
