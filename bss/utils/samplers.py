@@ -52,7 +52,7 @@ def slice_sample(x0, logprob, w=1.0, expand=True, max_steps_out=1000, compwise=T
     :param expand: Whether to expand the slice size, either by linear increments or a doubling process
     :param max_steps_out: The max. no. of expansion steps to take, either in a single direction (when stepping out in
         fixed-width increments), or the total max steps in both directions (when stepping out using doubling steps)
-    :param compwise:
+    :param compwise: TODO
     :param doubling_step: Whether to use the doubling procedure described to expand the slice size; Useful to expand
         intervals faster than stepping out in fixed-width increments
     :return:
@@ -60,21 +60,24 @@ def slice_sample(x0, logprob, w=1.0, expand=True, max_steps_out=1000, compwise=T
     def direction_slice(x0, direction):
 
         def dir_logprob(z):
-            # Log-probability value from a sample that is |z| distance away from the d-dimensional point x0, in the
-            # direction specified by the axis-aligned 'direction' (a vector with exactly one 1 and d-1 0s)
+            """
+            Log-probability value from a sample that is |z| distance away from the d-dimensional point x0, in the
+            direction specified by the axis-aligned 'direction' (a vector with exactly one 1 and d-1 0s)
+            """
             return logprob(x0 + direction * z)
 
         def acceptable(x0, x1, y, L, R):
-            # Test for whether a new point x1 is an acceptable next state, when the interval L-R was found by the
-            # doubling procedure. This additional check is needed only if doubling steps were performed during the
-            # slice expansion phase.
+            """
+            Test for whether a new point x1 is an acceptable next state, when the interval L-R was found by the
+            doubling procedure. This additional check is needed only if doubling steps were performed during the
+            slice expansion phase.
 
-            # Note that x1 is acceptable only if it could have produced the interval L-R. This entails additional
-            # checks in the case when the current point x0 and the new point x1 are on different 'sides' of
-            # the L-R interval. This is tracked through the variable D below. If x0 and x1 are on the same side of
-            # the middle, then we halve the interval and check again, and repeat the process till we reach our original
-            # slice width (w)
-
+            Note that x1 is acceptable only if it could also have produced the interval L-R. This entails additional
+            checks in the case when the current point x0 and the new point x1 are on different 'sides' of
+            the L-R interval. This is tracked through the variable D below. If x0 and x1 are on the same side of
+            the middle, then we only consider that half the interval and check again, and repeat the process till we
+            reach our original slice width (w)
+            """
             while (R - L) > 1.1 * w:  # A factor of 1.1 guards against possible round-off error
                 middle = (L + R)/2.
 
@@ -95,28 +98,27 @@ def slice_sample(x0, logprob, w=1.0, expand=True, max_steps_out=1000, compwise=T
             # x1 was not rejected in the loop above. It's acceptable.
             return True
 
-        # Note that in our implementation, the "current value" (x0 in Neal2003) is implicitly 0,
-        # since we find out the TODO: ??
+        # Note that in our implementation, the "current value" (x0 in Neal2003) is implicitly 0.
+        # since we simply add x0 to x1 at the very end, in the direction specified by the vector 'direction'
 
         # ----------------------------------
         # 1. Finding an appropriate interval
         # ----------------------------------
 
-        # Randomly position the initial interval of width w around x0 (0)
+        # Randomly position the initial interval of width w around 0
         R = w * npr.rand()
         L = R - w
 
-        # Log-Likelihood value at TODO: ??
-        y = np.log(npr.rand()) + dir_logprob(0.0)
+        # Log-Likelihood value at x0. TODO: Why the additional value??
+        y = logprob(x0) + np.log(npr.rand())
 
         # The no. of "step-out" steps we've taken in the lower and upper directions
         L_steps_out = R_steps_out = 0
 
         if expand:
             if doubling_step:
-                # Produce a sequence of intervals, each twice the size of the previous one, until and interval is
-                # found with both ends outside the slice, or a predetermined limit on the no. of step-outs has been
-                # reached.
+                # Produce a sequence of intervals, each twice the size of the previous one, until an interval is found
+                # with both ends outside the slice, or a predetermined limit on the no. of step-outs has been reached.
                 while (L_steps_out + R_steps_out) < max_steps_out and (dir_logprob(L) > y or dir_logprob(R) > y):
                     # Note that the two sides are not expanded equally. Instead just one side is expanded, chosen at
                     # random (irrespective of whether that side is already outside the slice). This is essential to
@@ -173,14 +175,11 @@ def slice_sample(x0, logprob, w=1.0, expand=True, max_steps_out=1000, compwise=T
 
     dims = x0.shape[0]
     if compwise:
-        ordering = list(range(dims))
-        npr.shuffle(ordering)
         new_x = x0.copy()
-        for d in ordering:
-            direction = np.zeros(dims)
-            direction[d] = 1.0
+        directions = np.eye(dims)
+        npr.shuffle(directions)
+        for direction in directions:
             new_x = direction_slice(new_x, direction)
-
     else:
         direction = npr.randn(dims)
         direction = direction / np.sqrt(np.sum(direction ** 2))

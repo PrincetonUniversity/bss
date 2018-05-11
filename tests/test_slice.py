@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 from bss.utils.samplers import slice_sample
-
+from bss.utils.samplers2 import SliceSampler
 
 class SliceTestCase(TestCase):
     def setUp(self):
@@ -20,14 +20,15 @@ class SliceTestCase(TestCase):
             return np.log(y) if y>0 else -np.inf
             # return np.log(beta(5,2).pdf(x))
 
-        vals = [np.random.rand()]
-        for i in range(1, 1000):
-            y = slice_sample(vals[-1], lognorm)
-            vals.append(y)
+        sampler = SliceSampler(lognorm)
+        x0 = np.random.rand()
+        i = 0
+        samples = sampler.sample(x0)
+        for x in samples:
+            print(x)
+            i += 1
+            if i==10:
+                break
 
-        # fig1 = plt.figure()
-        # plt.hist(vals, bins=30)
-        # plt.show()
-        self.assertTrue(True)
 
 
