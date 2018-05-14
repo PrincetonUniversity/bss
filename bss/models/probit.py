@@ -6,7 +6,7 @@ from scipy.stats import beta, gamma, norm
 from bss import logger
 from bss.utils.math import multivariate_normal as Mvn
 from bss.utils.samplers import slice_sample, elliptical_slice_sample
-
+from bss.utils.samplers2 import SliceSampler
 
 class Probit(object):
     def __init__(self, X, Y, R, target_sparsity=0.01, gamma0_v=1.0, lambda_params=(1e-6, 1e-6), nu_a=1e-6, nu_b=1e-6,
@@ -265,6 +265,7 @@ class Probit(object):
             return self.log_marg_like(self.gamma, self.gamma0, lamb, self.nu) + self._lambda_distribution.logpdf(lamb)
 
         self.lamb = slice_sample(self.lamb, slice_fn)
+        # self.lamb = next(SliceSampler(slice_fn).start(self.lamb))
 
     def update_gamma0(self):
         r"""
@@ -280,7 +281,8 @@ class Probit(object):
         def slice_fn(gamma0):
             return self.log_marg_like(self.gamma, gamma0, self.lamb, self.nu) + self._gamma0_distribution.logpdf(gamma0)
 
-        self.gamma0 = slice_sample(self.gamma0, slice_fn, expand=True)
+        self.gamma0 = slice_sample(self.gamma0, slice_fn)
+        # self.gamma0 = next(SliceSampler(slice_fn).start(self.gamma0))
 
     def update_xi(self):
         r"""
@@ -305,4 +307,5 @@ class Probit(object):
                 return self.log_marg_like(gamma, self.gamma0, self.lamb, self.nu) + self._xi_distribution.logpdf(xi)
 
         self.xi = slice_sample(self.xi, slice_fn)
+        # self.xi = next(SliceSampler(slice_fn).start(self.xi))
         self.gamma = self.probit_distribution(self.xi).dot(whitened)

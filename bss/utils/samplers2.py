@@ -28,7 +28,7 @@ class SliceSampler(object):
         self.compwise = compwise
         self.doubling_step = doubling_step
 
-    def sample(self, x0):
+    def start(self, x0):
         return SliceSamplerIterator(x0, self.logprob, self.w, self.expand, self.max_steps_out, self.compwise, self.doubling_step)
 
 
@@ -67,19 +67,21 @@ class SliceSamplerIterator(object):
             direction = direction / np.sqrt(np.sum(direction ** 2))
             new_x = self.direction_slice(self.x0, direction)
 
+        # Update current position for the next iteration, and return the new position we're at
+        self.x0 = new_x
         if self.scalar:
             return float(new_x[0])
         else:
             return new_x
 
-    def dir_logprob(self, x0, direction, z):
+    def dir_logprob(self, z, direction):
         """
         Log-probability value from a sample that is |z| distance away from the d-dimensional point x0, in the
         direction specified by the axis-aligned 'direction' (a vector with exactly one 1 and d-1 0s)
         """
-        return self.logprob(x0 + direction * z)
+        return self.logprob(self.x0 + direction * z)
 
-    def acceptable(self, x0, x1, y, L, R):
+    def acceptable(self, x0, x1, y, L, R, direction):
         """
         Test for whether a new point x1 is an acceptable next state, when the interval L-R was found by the
         doubling procedure. This additional check is needed only if doubling steps were performed during the
@@ -105,7 +107,7 @@ class SliceSamplerIterator(object):
 
             # If x0 and x1 were on different sides of the middle, then the original L-R interval could have
             # been produced by doubling from an interval containing x1 ONLY IF both ends were not off-slice.
-            if D and y >= self.dir_logprob(L) and y >= self.dir_logprob(R):
+            if D and y >= self.dir_logprob(L, direction) and y >= self.dir_logprob(R, direction):
                 return False
 
         # x1 was not rejected in the loop above. It's acceptable.
@@ -124,7 +126,7 @@ class SliceSamplerIterator(object):
         L = R - self.w
 
         # Log-Likelihood value at x0. TODO: Why the additional value??
-        y = self.logprob(self.x0) + np.log(npr.rand())
+        y = self.logprob(x0) + np.log(npr.rand())
 
         # The no. of "step-out" steps we've taken in the lower and upper directions
         L_steps_out = R_steps_out = 0
@@ -133,7 +135,7 @@ class SliceSamplerIterator(object):
             if self.doubling_step:
                 # Produce a sequence of intervals, each twice the size of the previous one, until an interval is found
                 # with both ends outside the slice, or a predetermined limit on the no. of step-outs has been reached.
-                while (L_steps_out + R_steps_out) < self.max_steps_out and (dir_logprob(L) > y or dir_logprob(R) > y):
+                while (L_steps_out + R_steps_out) < self.max_steps_out and (self.dir_logprob(L, direction) > y or self.dir_logprob(R, direction) > y):
                     # Note that the two sides are not expanded equally. Instead just one side is expanded, chosen at
                     # random (irrespective of whether that side is already outside the slice). This is essential to
                     # the correctness of the method, since it produces a final interval that could have been obtained
@@ -149,10 +151,10 @@ class SliceSamplerIterator(object):
             else:
                 # As long as we remain under the plot and haven't exceeded the max. no. of steps
                 # in either direction, keep expanding the slice by increments of w
-                while dir_logprob(L) > y and L_steps_out < self.max_steps_out:
+                while self.dir_logprob(L, direction) > y and L_steps_out < self.max_steps_out:
                     L_steps_out += 1
                     L -= self.w
-                while dir_logprob(R) > y and R_steps_out < self.max_steps_out:
+                while self.dir_logprob(R, direction) > y and R_steps_out < self.max_steps_out:
                     R_steps_out += 1
                     R += self.w
 
@@ -166,10 +168,10 @@ class SliceSamplerIterator(object):
         while True:
             steps_in += 1
             x1 = L + npr.rand() * (R - L)
-            new_y = dir_logprob(x1)
+            new_y = self.dir_logprob(x1, direction)
 
             # TODO: Should the additional 'acceptable' check be performed only if doubling_step = True ?
-            if new_y > y and acceptable(0, x1, y, L, R):
+            if new_y > y and self.acceptable(0, x1, y, L, R, direction):
                 break
             elif x1 < 0:
                 L = x1
@@ -181,5 +183,5 @@ class SliceSamplerIterator(object):
                 raise RuntimeError("Slice sampler shrank to zero!")
 
         # print("Steps Out:", L_steps_out, R_steps_out, " Steps In:", steps_in)
-        return self.x0 + self.direction * x1
+        return x0 + direction * x1
 

@@ -20,15 +20,29 @@ class SliceTestCase(TestCase):
             return np.log(y) if y>0 else -np.inf
             # return np.log(beta(5,2).pdf(x))
 
-        sampler = SliceSampler(lognorm)
         x0 = np.random.rand()
+        l1 = [x0]
+        l2 = [x0]
+        N = 1000
+
+        np.random.seed(12345)
+        sampler = SliceSampler(lognorm)
         i = 0
-        samples = sampler.sample(x0)
-        for x in samples:
-            print(x)
+        for x in sampler.start(x0):
+            l1.append(x)
             i += 1
-            if i==10:
+            if i==N:
                 break
+
+        np.random.seed(12345)
+        for i in range(N):
+            x0 = slice_sample(x0, lognorm)
+            l2.append(x0)
+
+        print(l1)
+        print('---------')
+        print(l2)
+        self.assertTrue(np.allclose(l1, l2))
 
 
 
