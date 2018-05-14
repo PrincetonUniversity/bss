@@ -166,29 +166,50 @@ class Probit(object):
             self._xi_distribution.logpdf(self.xi) if self.sample_xi else 0.0
         ])
 
-    def run_mcmc(self, iters=1000, burnin=100, post_trace=False):
+    def run_mcmc(self, iters=1000, burnin=100, detailed=False):
 
-        logpost_trace = np.zeros(iters)
-        inclusion_trace = np.zeros((iters, self.P), dtype=bool)
+        logjoint_trace = np.zeros(iters)
+        if detailed:
+            inclusion_trace = np.zeros((iters, self.P), dtype=bool)
+            gamma0_trace  = np.zeros(iters)
+            lambda_trace  = np.zeros(iters)
+            nu_trace      = np.zeros(iters)
+            xi_trace      = np.zeros(iters)
+            loglike_trace = np.zeros(iters)
 
         for i in range(-burnin, iters):
-            log_post = self.log_joint()
+            log_joint = self.log_joint()
+            log_like = self.log_marg_like(self.gamma, self.gamma0, self.lamb, self.nu)
 
             logger.info(
                 '%05d / %05d] logprob: %f [gamma0:%f lambda:%f nu:%f xi:%f' %
-                (i, iters, log_post, self.gamma0, self.lamb, self.nu, self.xi)
+                (i, iters, log_joint, self.gamma0, self.lamb, self.nu, self.xi)
             )
 
             self.update_parameters()
 
             if i >= 0:
-                inclusion_trace[i, :] = self.gamma > self.gamma0
-                logpost_trace[i] = log_post
+                logjoint_trace[i] = log_joint
+                if detailed:
+                    inclusion_trace[i, :] = self.gamma > self.gamma0
+                    gamma0_trace[i]  = self.gamma0
+                    lambda_trace[i]  = self.lamb
+                    nu_trace[i]      = self.nu
+                    xi_trace[i]      = self.xi
+                    loglike_trace[i] = log_like
 
-        if post_trace:
-            return logpost_trace
+        if not detailed:
+            return logjoint_trace
         else:
-            return np.mean(inclusion_trace, 0), inclusion_trace[np.argmax(logpost_trace), :]
+            return {
+                'inclusion': (np.mean(inclusion_trace, 0), inclusion_trace[np.argmax(logjoint_trace), :]),
+                'gamma0': gamma0_trace,
+                'lambda': lambda_trace,
+                'nu': nu_trace,
+                'xi': xi_trace,
+                'joint': logjoint_trace,
+                'likelihood': loglike_trace
+            }
 
     def update_parameters(self):
         # We update gamma, gamma0, lambda and nu in turn (Bottolo et al, 2011)
@@ -309,3 +330,82 @@ class Probit(object):
         self.xi = slice_sample(self.xi, slice_fn)
         # self.xi = next(SliceSampler(slice_fn).start(self.xi))
         self.gamma = self.probit_distribution(self.xi).dot(whitened)
+
+    # -------------------------------------------------------- #
+    # EXPERIMENTAL FOR GEWEKE VALIDATION
+    # -------------------------------------------------------- #
+    def update_data(self):
+        """
+        Apply MCMC transition operator to the dependent variables.
+        This is only useful for Geweke-style validation.
+        """
+        self. Y = self.ppi_distribution(self.gamma, self.gamma0, self.lamb).rvs(precision_multiplier=self.nu)
+
+    def run_geweke(self, iters=1000, burnin=100):
+        gamma0_trace  = np.zeros(iters)
+        lambda_trace  = np.zeros(iters)
+        nu_trace      = np.zeros(iters)
+        xi_trace      = np.zeros(iters)
+        logpost_trace = np.zeros(iters)
+        loglike_trace = np.zeros(iters)
+
+        for iter in range(-burnin, iters):
+            log_post = self.log_joint()
+            log_like = self.log_marg_like(self.gamma, self.gamma0, self.lamb, self.nu)
+
+            # sys.stderr.write('%05d / %05d] logpost: %f  loglike: %f\n' % (iter, iters, log_post, log_like))
+
+            self.update_gamma()
+            self.update_gamma0()
+            self.update_lambda()
+            self.update_nu()
+            if self.sample_xi:
+                self.update_xi()
+            self.update_data()
+
+            if iter >= 0:
+                gamma0_trace[iter]  = self.gamma0
+                lambda_trace[iter]  = self.lamb
+                nu_trace[iter]      = self.nu
+                xi_trace[iter]      = self.xi
+                logpost_trace[iter] = log_post
+                loglike_trace[iter] = log_like
+
+        import pylab as pl
+        pl.figure(1)
+        pl.subplot(2,2,1)
+        pl.hist(gamma0_trace, 25, normed=1)
+        gx = np.linspace(-5, 5, 1000)
+        pl.plot(gx, np.exp(self._gamma0_distribution.logpdf(gx)))
+        pl.title('gamma0')
+
+        pl.subplot(2,2,2)
+        pl.hist(lambda_trace, 25, normed=1)
+        gx = np.linspace(0, 10, 1000)
+        pl.plot(gx, np.exp(self._lambda_distribution.logpdf(gx)))
+        pl.title('lambda')
+
+        pl.subplot(2,2,3)
+        pl.hist(nu_trace, 25, normed=1)
+        gx = np.linspace(0, 10, 1000)
+        pl.plot(gx, np.exp(self._nu_distribution.logpdf(gx)))
+        pl.title('nu')
+
+        if self.sample_xi:
+            pl.subplot(2,2,4)
+            pl.hist(xi_trace, 25, normed=1)
+            gx = np.linspace(0, 1, 1000)
+            pl.plot(gx, np.exp(self._xi_distribution.logpdf(gx)))
+            pl.title('xi')
+
+        pl.figure(2)
+        pl.subplot(2,1,1)
+        pl.plot(logpost_trace)
+        pl.title('log posterior')
+
+        pl.subplot(2,1,2)
+        pl.plot(loglike_trace)
+        pl.title('log marginal likelihood')
+
+        pl.show()
+    # -------------------------------------------------------- #

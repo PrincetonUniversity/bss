@@ -35,8 +35,8 @@ class multivariate_normal_frozen(object):
     def chol(self):
         return self.cov_info.chol
 
-    def rvs(self):
-        return self.mean + np.dot(self.chol, np.random.randn(self.d))
+    def rvs(self, precision_multiplier=1):
+        return self.mean + np.dot(self.chol / np.sqrt(precision_multiplier), np.random.randn(self.d))
 
     def maha(self, x, precision_multiplier=1):
         return self._dist._maha(x, self.mean, self.cov_info.chol, precision_multiplier)

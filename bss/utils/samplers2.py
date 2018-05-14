@@ -1,6 +1,9 @@
 import numbers
+import logging
 import numpy as np
 import numpy.random as npr
+
+logger = logging.getLogger(__name__)
 
 
 class SliceSampler(object):
@@ -182,6 +185,6 @@ class SliceSamplerIterator(object):
             else:
                 raise RuntimeError("Slice sampler shrank to zero!")
 
-        # print("Steps Out:", L_steps_out, R_steps_out, " Steps In:", steps_in)
+        logger.debug("Steps Out: [{}, {}], Steps In: {}".format(L_steps_out, R_steps_out, steps_in))
         return x0 + direction * x1
 
