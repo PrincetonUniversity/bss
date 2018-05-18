@@ -12,18 +12,10 @@ bss\.utils\.data module
     :undoc-members:
     :show-inheritance:
 
-bss\.utils\.math module
------------------------
+bss\.utils\.mvn module
+----------------------
 
-.. automodule:: bss.utils.math
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-bss\.utils\.samplers module
----------------------------
-
-.. automodule:: bss.utils.samplers
+.. automodule:: bss.utils.mvn
     :members:
     :undoc-members:
     :show-inheritance:

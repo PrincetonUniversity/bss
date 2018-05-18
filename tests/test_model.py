@@ -12,7 +12,7 @@ class ModelTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.X, cls.y, _, cls.R = load_data(os.path.join(DATA_DIR, 'real0_*_10000.out'))
+        cls.X, cls.y, cls.R = load_data(os.path.join(DATA_DIR, 'real0_*_10000.out'))
 
     def setUp(self):
         np.random.seed(1)
@@ -90,19 +90,58 @@ class ModelTestCase(TestCase):
         for k, v in expected.items():
             for x, y in zip(detailed_trace[k], v):
                 self.assertAlmostEqual(x, y, places=6)
-
-    def _test_model_conditional(self):
-        X, y, _, R = load_data(os.path.join(DATA_DIR, 'real0_*_10000.out'))
-        model = Probit(
-            X=X,
-            Y=y,
-            R=R
-        )
-        trace = model.run_geweke(iters=200, burnin=50)
-        # expected_trace = [
-        #     4613.3151614505305, 4700.0565201187101, 4651.464728613646, 4654.9619244943506, 4628.7974616871106,
-        #     4629.8682792805203, 4637.0845615021908, 4658.0776869396414, 4609.6594171963898, 4672.197914151111
-        # ]
-        # self.assertEqual(len(trace), len(expected_trace))
-        # for x, y in zip(trace, expected_trace):
-        #     self.assertAlmostEqual(x, y, places=6)
+    #
+    # def test_model_conditional(self):
+    #     import pickle
+    #     detailed_trace = pickle.loads(open('trace.txt', 'rb').read())
+    #
+    #     model = Probit(
+    #         X=self.X,
+    #         Y=self.y,
+    #         R=self.R,
+    #         xi=None
+    #     )
+    #
+    #     gamma0_trace = detailed_trace['gamma0']
+    #     lambda_trace = detailed_trace['lambda']
+    #     nu_trace = detailed_trace['nu']
+    #     xi_trace = detailed_trace['xi']
+    #     joint_trace = detailed_trace['joint']
+    #     likelihood_trace = detailed_trace['likelihood']
+    #
+    #     import pylab as pl
+    #     pl.figure(1)
+    #     pl.subplot(2,2,1)
+    #     pl.hist(gamma0_trace, 25, normed=1)
+    #     gx = np.linspace(-5, 5, 1000)
+    #     pl.plot(gx, np.exp(model._gamma0_distribution.logpdf(gx)))
+    #     pl.title('gamma0')
+    #
+    #     pl.subplot(2,2,2)
+    #     pl.hist(lambda_trace, 25, normed=1)
+    #     gx = np.linspace(0, 10, 1000)
+    #     pl.plot(gx, np.exp(model._lambda_distribution.logpdf(gx)))
+    #     pl.title('lambda')
+    #
+    #     pl.subplot(2,2,3)
+    #     pl.hist(nu_trace, 25, normed=1)
+    #     gx = np.linspace(0, 10, 1000)
+    #     pl.plot(gx, np.exp(model._nu_distribution.logpdf(gx)))
+    #     pl.title('nu')
+    #
+    #     pl.subplot(2,2,4)
+    #     pl.hist(xi_trace, 25, normed=1)
+    #     gx = np.linspace(0, 1, 1000)
+    #     pl.plot(gx, np.exp(model._xi_distribution.logpdf(gx)))
+    #     pl.title('xi')
+    #
+    #     pl.figure(2)
+    #     pl.subplot(2,1,1)
+    #     pl.plot(joint_trace)
+    #     pl.title('log posterior')
+    #
+    #     pl.subplot(2,1,2)
+    #     pl.plot(likelihood_trace)
+    #     pl.title('log marginal likelihood')
+    #
+    #     pl.show()

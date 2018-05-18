@@ -14,18 +14,16 @@ class DataTestCase(TestCase):
         pass
 
     def test_load_xy(self):
-        genos, phenos, eqtls = load_xy_file(os.path.join(DATA_DIR, 'real0_yx_10000.out'))
+        genos, phenos = load_xy_file(os.path.join(DATA_DIR, 'real0_yx_10000.out'))
         self.assertEqual(genos.shape, (480, 1509))
         self.assertEqual(phenos.shape, (480,))
-        self.assertEqual(eqtls.shape, (1509,))
 
     def test_load_cor(self):
         cor = load_cor_file(os.path.join(DATA_DIR, 'real0_cor1_10000.out'))
         self.assertEqual(cor.shape, (1509, 1509))
 
     def test_load_data(self):
-        genos, phenos, eqtls, cor = load_data(os.path.join(DATA_DIR, 'real0_*_10000.out'))
+        genos, phenos, cor = load_data(os.path.join(DATA_DIR, 'real0_*_10000.out'))
         self.assertEqual(genos.shape, (480, 1509))
         self.assertEqual(phenos.shape, (480,))
-        self.assertEqual(eqtls.shape, (1509,))
         self.assertEqual(cor.shape, (1509, 1509))

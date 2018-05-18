@@ -14,7 +14,7 @@ def parse_args():
 
 def main():
     opts = parse_args()
-    X, y, _, R = load_data(opts.file_pattern)
+    X, y, R = load_data(opts.file_pattern)
     model = Probit(
         X=X,
         Y=y,

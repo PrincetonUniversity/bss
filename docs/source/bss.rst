@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
 
     bss.models
+    bss.samplers
     bss.utils
 
 Module contents

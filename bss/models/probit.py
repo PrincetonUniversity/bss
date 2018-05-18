@@ -4,12 +4,13 @@ import numpy as np
 from scipy.stats import beta, gamma, norm
 
 from bss import logger
-from bss.utils.math import multivariate_normal as Mvn
-from bss.utils.samplers import slice_sample, elliptical_slice_sample
-from bss.utils.samplers2 import SliceSampler
+from bss.utils.mvn import Mvn
+from bss.samplers.slice import SliceSampler
+from bss.samplers.elliptical import EllipticalSliceSampler
+
 
 class Probit(object):
-    def __init__(self, X, Y, R, target_sparsity=0.01, gamma0_v=1.0, lambda_params=(1e-6, 1e-6), nu_a=1e-6, nu_b=1e-6,
+    def __init__(self, X, Y, R, target_sparsity=0.01, gamma0_v=1.0, lambda_params=(1e-6, 1e-6), nu_params=(1e-6, 1e-6),
                  xi=0.999999, xi_prior_shape=(1, 1), check_finite=True, min_eigenval=0, jitter=1e-6):
         r"""
         The Probit model used for modeling Sparse Regression using a Gaussian field. :cite:`Engelhardt2014`.
@@ -30,9 +31,7 @@ class Probit(object):
         :param gamma0_v: Variance of the probit threshold gamma_0
         :param lambda_params: Shape parameter and Inverse-scale parameter of the gamma prior placed on the model
             parameter lambda, where lambda is the inverse squared global scale parameter for the regression weights.
-        :param nu_a: Shape parameter of the gamma prior placed on the model parameter
-            nu, where nu is the residual precision.
-        :param nu_b: Inverse-scale parameter of the gamma prior placed on the model parameter
+        :param nu_params: Shape parameter and Inverse-scale parameter of the gamma prior placed on the model parameter
             nu, where nu is the residual precision.
         :param xi: The shrinkage constant in the interval [0,1] to regularize the covariance matrix towards the
             identity matrix. This ensures that the covariance matrix is positive definite.
@@ -58,7 +57,7 @@ class Probit(object):
 
         self.N, self.P = self.X.shape
 
-        self.nu_a, self.nu_b = nu_a, nu_b
+        self.nu_a, self.nu_b = nu_params
 
         self.check_finite = check_finite
 
@@ -78,17 +77,21 @@ class Probit(object):
         self._nu_distribution = gamma(self.nu_a, scale=1./self.nu_b)
         self.nu = self._nu_distribution.mean()
 
-        # Cache for holding probit prior distributions (multivariate normal distributions with 0 mean and known
-        # covariance, possibly adjusted by a shrinkage factor xi expressing our confidence in the covariance).
-        # A single iteration of MCMC calls on many computations on this distribution, so caching improves performance
-        # significantly. A small cache size works just as well as a large one,
-        # because the most recently used distribution tends to be used repeatedly in a single MCMC step.
+        """
+        Cache for holding probit prior distributions (multivariate normal distributions with 0 mean and known
+        covariance, possibly adjusted by a shrinkage factor xi expressing our confidence in the covariance).
+        A single iteration of MCMC calls on many computations on this distribution, so caching improves performance
+        significantly. A small cache size works just as well as a large one,
+        because the most recently used distribution tends to be used repeatedly in a single MCMC step.
+        """
         self._probit_cache = Cache(maxsize=4)
 
-        # A cache used to hold the marginal PPI (Posterior Probability of Inclusion) distributions
-        # p(y | X, gamma, gamma_0, nu, lambda) ~ Normal(..)
-        # A small cache size works just as well as a large one, because the most recently used distribution tends to
-        # be used repeatedly in a single MCMC step.
+        """
+        A cache used to hold the marginal PPI (Posterior Probability of Inclusion) distributions
+        p(y | X, gamma, gamma_0, nu, lambda) ~ Normal(..)
+        A small cache size works just as well as a large one, because the most recently used distribution tends to
+        be used repeatedly in a single MCMC step.
+        """
         self._ppi_cache = Cache(maxsize=8)
 
         # Initialize the sparsity function by generating a random variate from the model's probit distribution
@@ -135,23 +138,24 @@ class Probit(object):
         :return:
         """
 
-        # The natural way to implement this would be:
-        #
-        # indicator_matrix = np.diag(gamma > gamma0)
-        # result = Mvn(
-        #     (self.X.dot(indicator_matrix).dot(self.X.T) + np.ones((self.N, self.N))) / lamb
-        #     + np.eye(self.N)
-        # )
-        #
-        # However:
-        #   X * indicator_matrix * X.T
-        # is an expensive matrix multiplication, which can be avoided by first taking the columns of X that are above
-        # the probit threshold gamma0, and then simply taking the square of that masked matrix:
-        #   X = X[:, gamma > gamma0]
-        #   X * X.T
+        """
+        The natural way to implement this would be:
 
+        indicator_matrix = np.diag(gamma > gamma0)
+        result = Mvn(
+            cov = (self.X.dot(indicator_matrix).dot(self.X.T) + np.ones((self.N, self.N))) / lamb
+            + np.eye(self.N)
+        )
+
+        However:
+          X * indicator_matrix * X.T
+        is an expensive matrix multiplication, which can be avoided by first taking the columns of X that are above
+        the probit threshold gamma0, and then simply taking the square of that masked matrix:
+          X = X[:, gamma > gamma0]
+          X * X.T
+        """
         X = self.X[:, gamma > gamma0]
-        return Mvn((np.dot(X, X.T) + np.ones((self.N, self.N))) / lamb + np.eye(self.N))
+        return Mvn(cov=(np.dot(X, X.T) + np.ones((self.N, self.N))) / lamb + np.eye(self.N))
 
     def log_marg_like(self, gamma, gamma0, lamb, nu):
         return self.ppi_distribution(gamma, gamma0, lamb).logpdf(self.Y, precision_multiplier=nu)
@@ -236,11 +240,10 @@ class Probit(object):
 
         :return: On return, the :math:`\gamma` parameter of the model has been updated using a new sample.
         """
-        self.gamma = elliptical_slice_sample(
-            current_state=self.gamma,
+        self.gamma = EllipticalSliceSampler(
             normal_dist=self.probit_distribution(self.xi),
             log_like_fn=lambda gamma: self.log_marg_like(gamma, self.gamma0, self.lamb, self.nu)
-        )
+        ).one(x0=self.gamma)
 
     def update_nu(self):
         r"""
@@ -285,8 +288,7 @@ class Probit(object):
                 return -np.inf
             return self.log_marg_like(self.gamma, self.gamma0, lamb, self.nu) + self._lambda_distribution.logpdf(lamb)
 
-        self.lamb = slice_sample(self.lamb, slice_fn)
-        # self.lamb = next(SliceSampler(slice_fn).start(self.lamb))
+        self.lamb = SliceSampler(slice_fn).one(x0=self.lamb)
 
     def update_gamma0(self):
         r"""
@@ -302,8 +304,7 @@ class Probit(object):
         def slice_fn(gamma0):
             return self.log_marg_like(self.gamma, gamma0, self.lamb, self.nu) + self._gamma0_distribution.logpdf(gamma0)
 
-        self.gamma0 = slice_sample(self.gamma0, slice_fn)
-        # self.gamma0 = next(SliceSampler(slice_fn).start(self.gamma0))
+        self.gamma0 = SliceSampler(slice_fn).one(x0=self.gamma0)
 
     def update_xi(self):
         r"""
@@ -327,8 +328,7 @@ class Probit(object):
             else:
                 return self.log_marg_like(gamma, self.gamma0, self.lamb, self.nu) + self._xi_distribution.logpdf(xi)
 
-        self.xi = slice_sample(self.xi, slice_fn)
-        # self.xi = next(SliceSampler(slice_fn).start(self.xi))
+        self.xi = SliceSampler(slice_fn).one(x0=self.xi)
         self.gamma = self.probit_distribution(self.xi).dot(whitened)
 
     # -------------------------------------------------------- #
@@ -339,7 +339,7 @@ class Probit(object):
         Apply MCMC transition operator to the dependent variables.
         This is only useful for Geweke-style validation.
         """
-        self. Y = self.ppi_distribution(self.gamma, self.gamma0, self.lamb).rvs(precision_multiplier=self.nu)
+        self.Y = self.ppi_distribution(self.gamma, self.gamma0, self.lamb).rvs(precision_multiplier=self.nu)
 
     def run_geweke(self, iters=1000, burnin=100):
         gamma0_trace  = np.zeros(iters)

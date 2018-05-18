@@ -1,3 +1,7 @@
+"""
+Functions to load the feature matrix X, the response vector y, and covariance matrix sigma from data files.
+"""
+
 import os.path
 import glob
 import csv
@@ -5,22 +9,52 @@ import numpy as np
 
 
 def load_xy_file(path, delimiter=','):
+    """
+    Load the feature matrix X and response vector y from a given file specified by path.
+
+    Parameters
+    ----------
+    path : str
+        The full path to the 'xy' file containing SNP expression data.
+    delimiter: str, optional
+        The delimiter for the csv file
+
+    Returns
+    -------
+    tuple
+        A 2 tuple of values - (a NxD feature matrix, a Nx1 response vector)
+    """
     with open(path, 'r') as f:
         reader = csv.reader(f, delimiter=delimiter)
 
         header = next(reader)
         phenos = list(map(float, header[2:]))
 
-        eqtls = []
         genos = []
         for row in reader:
-            eqtls.append(bool(int(row[1])))
+
             genos.append(np.array(list(map(float, row[2:]))))
 
-        return np.array(genos).T, np.array(phenos), np.array(eqtls)
+        x = np.array(genos).T, np.array(phenos)
+        return x
 
 
 def load_cor_file(path, delimiter=','):
+    """
+    Load the correlation file from a given file specified by path.
+
+    Parameters
+    ----------
+    path : str
+        The full path to the 'cor' file containing correlation values of pairs of SNPs.
+    delimiter: str, optional
+        The delimiter for the csv file
+
+    Returns
+    -------
+    ndarray
+        A DxD symmetric matrix of correlation values between pairs of SNPs
+    """
     with open(path, 'r') as f:
         reader = csv.reader(f, delimiter=delimiter)
 
@@ -34,13 +68,23 @@ def load_cor_file(path, delimiter=','):
 
 def load_data(pattern):
     """
-    A generator function to load the 'main' data and correlation data for a given file pattern
-    :param pattern: A file pattern (with directory path), consumable by the glob module for *xy* files to process
+    A function to load the 'main' data and correlation data for a given file pattern
+
+    Parameters
+    ----------
+    pattern : str
+        A file pattern (with directory path), consumable by the glob module for *xy* files to process
         For example: '/some/path/data/real0_yx_*.*'
-    :return: A 4-tuple of numpy vectors:
+
+    Returns
+    -------
+    tuple
+        A 3-tuple of numpy arrays:
+
         X: A numpy feature matrix (mxn) of genotype values, for m phenotypes and n SNPs
+
         Y: A numpy vector (mx1) of phenotype values - the response variable
-        eqtls: A numpy vector (nx1) of eQTL values - one for each SNP
+
         cor: A numpy matrix (nxn) of correlation values for each pair of n SNPs
     """
     for filename in glob.glob(pattern):

@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Bayesian Structured Sparsity'
-copyright = '2018, CSML'
+copyright = '2018, Princeton University'
 author = 'Ryan Adams, Vineet Bansal'
 
 # The version info for the project you're documenting, acts as replacement for
