@@ -1,0 +1,291 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>BSS (Bayesian Structured Sparsity) documentation &mdash; Bayesian Structured Sparsity 0.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bss" href="modules.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="#" class="icon icon-home"> Bayesian Structured Sparsity
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">bss</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Bayesian Structured Sparsity</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#">Docs</a> &raquo;</li>
+        
+      <li>BSS (Bayesian Structured Sparsity) documentation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="bss-bayesian-structured-sparsity-documentation">
+<h1>BSS (Bayesian Structured Sparsity) documentation<a class="headerlink" href="#bss-bayesian-structured-sparsity-documentation" title="Permalink to this headline">¶</a></h1>
+<p>Companion code for the paper</p>
+<p><a class="reference external" href="https://arxiv.org/abs/1407.2235">Bayesian Structured Sparsity from Gaussian Fields</a></p>
+<p>Barbara E. Engelhardt, Ryan P. Adams</p>
+<p>Substantial research on structured sparsity has contributed to analysis of many different applications.
+However, there have been few Bayesian procedures among this work. Here, we develop a Bayesian model for structured sparsity
+that uses a Gaussian process (GP) to share parameters of the sparsity-inducing prior in proportion to feature similarity
+as defined by an arbitrary positive definite kernel. For linear regression, this sparsity-inducing prior on regression
+coefficients is a relaxation of the canonical spike-and-slab prior that flattens the mixture model into a scale mixture
+of normals. This prior retains the explicit posterior probability on inclusion parameters — now with GP probit prior
+distributions — but enables tractable computation via elliptical slice sampling for the latent Gaussian field.
+We motivate development of this prior using the genomic application of association mapping, or identifying genetic
+variants associated with a continuous trait.</p>
+<p>Our Bayesian structured sparsity model produced sparse results with substantially improved sensitivity and precision
+relative to comparable methods. Through simulations, we show that three properties are key to this improvement:</p>
+<ol class="lowerroman simple">
+<li>modeling structure in the covariates,</li>
+<li>significance testing using the posterior probabilities of inclusion, and</li>
+<li>model averaging.</li>
+</ol>
+<p>We present results from applying this model to a large genomic dataset to demonstrate
+computational tractability.</p>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">bss</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bss.html">bss package</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+<div class="section" id="references">
+<h1>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h1>
+<p id="bibtex-bibliography-index-0"><table class="docutils citation" frame="void" id="engelhardt2014" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[EA14]</td><td>Barbara&nbsp;E Engelhardt and Ryan&nbsp;P Adams. Bayesian structured sparsity from gaussian fields. <em>arXiv preprint arXiv:1407.2235</em>, 1:1–23, July 2014. <a class="reference external" href="https://arxiv.org/abs/1407.2235">arXiv:1407.2235</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="murray2010b" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[MA10]</td><td>Iain Murray and Ryan&nbsp;Prescott Adams. Slice sampling covariance hyperparameters of latent gaussian models. <em>Advances in Neural Information Processing Systems</em>, 2010. <a class="reference external" href="https://arxiv.org/abs/1006.0868">arXiv:1006.0868</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="murray2010" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[MAM10]</td><td>Iain Murray, Ryan&nbsp;Prescott Adams, and David&nbsp;J.C. MacKay. Elliptical slice sampling. <em>Proceedings of the 13th International Conference on Artificial Intelligence and Statistics</em>, pages 541–548, 2010. <a class="reference external" href="https://arxiv.org/abs/1001.0175">arXiv:1001.0175</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="neal2003" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[Nea03]</td><td>Radford&nbsp;M. Neal. Slice sampling. <em>The Annals of Statistics</em>, 31(3):705–767, 2003. URL: <a class="reference external" href="https://projecteuclid.org/euclid.aos/1056562461">https://projecteuclid.org/euclid.aos/1056562461</a>.</td></tr>
+</tbody>
+</table>
+</p>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="modules.html" class="btn btn-neutral float-right" title="bss" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Princeton University.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.0.2',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,483 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>bss.samplers package &mdash; Bayesian Structured Sparsity 0.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="bss.models package" href="bss.models.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Bayesian Structured Sparsity
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bss</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bss.html">bss package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bss.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="bss.models.html">bss.models package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">bss.samplers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bss.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bss.html#module-bss.data">bss.data module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bss.html#module-bss.mvn">bss.mvn module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bss.html#module-bss">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bayesian Structured Sparsity</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="modules.html">bss</a> &raquo;</li>
+        
+          <li><a href="bss.html">bss package</a> &raquo;</li>
+        
+      <li>bss.samplers package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/bss.samplers.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="bss-samplers-package">
+<h1>bss.samplers package<a class="headerlink" href="#bss-samplers-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-bss.samplers.elliptical">
+<span id="bss-samplers-elliptical-module"></span><h2>bss.samplers.elliptical module<a class="headerlink" href="#module-bss.samplers.elliptical" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bss.samplers.elliptical.EllipticalSliceSampler">
+<em class="property">class </em><code class="descclassname">bss.samplers.elliptical.</code><code class="descname">EllipticalSliceSampler</code><span class="sig-paren">(</span><em>normal_dist</em>, <em>log_like_fn</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.samplers.elliptical.EllipticalSliceSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Elliptical Slice Sampling algorithm as outlined in <a class="reference internal" href="index.html#murray2010" id="id1">[MAM10]</a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>normal_dist</strong> : object</p>
+<blockquote>
+<div><p>Object representing the normal distribution that current_state is sampled from. This object needs to be able to
+supply a d-dimensional variate through an rvs() method.</p>
+</div></blockquote>
+<p><strong>log_like_fn</strong> : callable</p>
+<blockquote class="last">
+<div><p>Log Likelihood function that takes in a single argument, a d-dimensional vector representing
+a state, and returns a scalar log-likelihood value</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="bss.samplers.elliptical.EllipticalSliceSampler.chain">
+<code class="descname">chain</code><span class="sig-paren">(</span><em>x0=None</em>, <em>iters=100000</em>, <em>burn_in=50000</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.samplers.elliptical.EllipticalSliceSampler.chain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a fixed number of samples, for a given burn_in and no. of iterations</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x0</strong> : ndarray, optional</p>
+<blockquote>
+<div><p>The starting point of the sampling process, a dx1 vector</p>
+</div></blockquote>
+<p><strong>iters: int, optional</strong></p>
+<blockquote>
+<div><p>The no. of iterations of sampling to run, including the burn-in, if any.</p>
+</div></blockquote>
+<p><strong>burn_in: int, optional</strong></p>
+<blockquote>
+<div><p>The no. of samples to discard as burn-in samples.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">list</p>
+<blockquote class="last">
+<div><p>A list of iters-burn_in samples, each a dx1 numpy vector</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bss.samplers.elliptical.EllipticalSliceSampler.one">
+<code class="descname">one</code><span class="sig-paren">(</span><em>x0=None</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.samplers.elliptical.EllipticalSliceSampler.one" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a single sample, given the starting point of sampling.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x0</strong> : ndarray, optional</p>
+<blockquote>
+<div><p>The starting point of the sampling process, a dx1 vector</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ndarray</p>
+<blockquote class="last">
+<div><p>A single sample, a dx1 vector</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bss.samplers.elliptical.EllipticalSliceSampler.start">
+<code class="descname">start</code><span class="sig-paren">(</span><em>x0=None</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.samplers.elliptical.EllipticalSliceSampler.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start the sampling process at a given point defined by x0</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x0</strong> : ndarray, optional</p>
+<blockquote>
+<div><p>The starting point of the sampling process, a dx1 vector</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">iterable</p>
+<blockquote class="last">
+<div><p>A (never-ending) iterable of dx1 samples from slice-sampling</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-bss.samplers.slice">
+<span id="bss-samplers-slice-module"></span><h2>bss.samplers.slice module<a class="headerlink" href="#module-bss.samplers.slice" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bss.samplers.slice.SliceSampler">
+<em class="property">class </em><code class="descclassname">bss.samplers.slice.</code><code class="descname">SliceSampler</code><span class="sig-paren">(</span><em>logprob</em>, <em>w=1.0</em>, <em>expand=True</em>, <em>max_steps_out=1000</em>, <em>compwise=True</em>, <em>doubling_step=True</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.samplers.slice.SliceSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Exponential-Expansion slice sampling as per <a class="reference internal" href="index.html#neal2003" id="id2">[Nea03]</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>logprob</strong> : callable</p>
+<blockquote>
+<div><p>A function taking a single sample (a dx1 ndarray), and returning the log-probability of that sample</p>
+</div></blockquote>
+<p><strong>w</strong> : float, optional</p>
+<blockquote>
+<div><p>Estimate of the typical size of a slice</p>
+</div></blockquote>
+<p><strong>expand</strong> : bool, optional</p>
+<blockquote>
+<div><p>Whether to expand the slice size, either by linear increments or a doubling process</p>
+</div></blockquote>
+<p><strong>max_steps_out</strong> : int, optional</p>
+<blockquote>
+<div><p>The max. no. of expansion steps to take, either in a single direction (when stepping out in
+fixed-width increments), or the total max steps in both directions (when stepping out using doubling steps).</p>
+</div></blockquote>
+<p><strong>compwise</strong> : bool, optional</p>
+<blockquote>
+<div><p>TODO: Complete writeup</p>
+</div></blockquote>
+<p><strong>doubling_step</strong> : bool, optional</p>
+<blockquote class="last">
+<div><p>Whether to use the doubling procedure described to expand the slice size; Useful to expand intervals faster
+than stepping out in fixed-width increments.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="bss.samplers.slice.SliceSampler.chain">
+<code class="descname">chain</code><span class="sig-paren">(</span><em>x0=None</em>, <em>iters=100000</em>, <em>burn_in=50000</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.samplers.slice.SliceSampler.chain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a fixed number of samples, for a given burn_in and no. of iterations</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x0</strong> : ndarray, optional</p>
+<blockquote>
+<div><p>The starting point of the sampling process, a dx1 vector</p>
+</div></blockquote>
+<p><strong>iters: int, optional</strong></p>
+<blockquote>
+<div><p>The no. of iterations of sampling to run, including the burn-in, if any.</p>
+</div></blockquote>
+<p><strong>burn_in: int, optional</strong></p>
+<blockquote>
+<div><p>The no. of samples to discard as burn-in samples.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">list</p>
+<blockquote class="last">
+<div><p>A list of iters-burn_in samples, each a dx1 numpy vector</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bss.samplers.slice.SliceSampler.one">
+<code class="descname">one</code><span class="sig-paren">(</span><em>x0=None</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.samplers.slice.SliceSampler.one" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a single sample, given the starting point of sampling.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x0</strong> : ndarray, optional</p>
+<blockquote>
+<div><p>The starting point of the sampling process, a dx1 vector</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ndarray</p>
+<blockquote class="last">
+<div><p>A single sample, a dx1 vector</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bss.samplers.slice.SliceSampler.start">
+<code class="descname">start</code><span class="sig-paren">(</span><em>x0=None</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.samplers.slice.SliceSampler.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start the sampling process at a given point defined by x0</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x0</strong> : ndarray, optional</p>
+<blockquote>
+<div><p>The starting point of the sampling process, a dx1 vector</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">iterable</p>
+<blockquote class="last">
+<div><p>A (never-ending) iterable of dx1 samples from slice-sampling</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-bss.samplers">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bss.samplers" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="bss.models.html" class="btn btn-neutral" title="bss.models package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Princeton University.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.0.2',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>

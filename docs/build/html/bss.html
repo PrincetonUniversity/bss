@@ -1,0 +1,546 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>bss package &mdash; Bayesian Structured Sparsity 0.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bss.models package" href="bss.models.html" />
+    <link rel="prev" title="bss" href="modules.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Bayesian Structured Sparsity
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bss</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">bss package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bss.models.html">bss.models package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bss.samplers.html">bss.samplers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-bss.data">bss.data module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-bss.mvn">bss.mvn module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-bss">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bayesian Structured Sparsity</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="modules.html">bss</a> &raquo;</li>
+        
+      <li>bss package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/bss.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="bss-package">
+<h1>bss package<a class="headerlink" href="#bss-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="bss.models.html">bss.models package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bss.models.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bss.models.html#module-bss.models.probit">bss.models.probit module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bss.models.html#module-bss.models">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bss.samplers.html">bss.samplers package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bss.samplers.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bss.samplers.html#module-bss.samplers.elliptical">bss.samplers.elliptical module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bss.samplers.html#module-bss.samplers.slice">bss.samplers.slice module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bss.samplers.html#module-bss.samplers">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-bss.data">
+<span id="bss-data-module"></span><h2>bss.data module<a class="headerlink" href="#module-bss.data" title="Permalink to this headline">¶</a></h2>
+<p>Functions to load the feature matrix X, the response vector y, and covariance matrix sigma from data files.</p>
+<dl class="function">
+<dt id="bss.data.load_cor_file">
+<code class="descclassname">bss.data.</code><code class="descname">load_cor_file</code><span class="sig-paren">(</span><em>path</em>, <em>delimiter='</em>, <em>'</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.data.load_cor_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the correlation file from a given file specified by path.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>path</strong> : str</p>
+<blockquote>
+<div><p>The full path to the ‘cor’ file containing correlation values of pairs of SNPs.</p>
+</div></blockquote>
+<p><strong>delimiter: str, optional</strong></p>
+<blockquote>
+<div><p>The delimiter for the csv file</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ndarray</p>
+<blockquote class="last">
+<div><p>A DxD symmetric matrix of correlation values between pairs of SNPs</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bss.data.load_data">
+<code class="descclassname">bss.data.</code><code class="descname">load_data</code><span class="sig-paren">(</span><em>pattern</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.data.load_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>A function to load the ‘main’ data and correlation data for a given file pattern</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>pattern</strong> : str</p>
+<blockquote>
+<div><p>A file pattern (with directory path), consumable by the glob module for <em>xy</em> files to process
+For example: ‘/some/path/data/real0_yx_*.*’</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">tuple</p>
+<blockquote class="last">
+<div><p>A 3-tuple of numpy arrays:</p>
+<p>X: A numpy feature matrix (mxn) of genotype values, for m phenotypes and n SNPs</p>
+<p>Y: A numpy vector (mx1) of phenotype values - the response variable</p>
+<p>cor: A numpy matrix (nxn) of correlation values for each pair of n SNPs</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bss.data.load_xy_file">
+<code class="descclassname">bss.data.</code><code class="descname">load_xy_file</code><span class="sig-paren">(</span><em>path</em>, <em>delimiter='</em>, <em>'</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.data.load_xy_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the feature matrix X and response vector y from a given file specified by path.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>path</strong> : str</p>
+<blockquote>
+<div><p>The full path to the ‘xy’ file containing SNP expression data.</p>
+</div></blockquote>
+<p><strong>delimiter: str, optional</strong></p>
+<blockquote>
+<div><p>The delimiter for the csv file</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">tuple</p>
+<blockquote class="last">
+<div><p>A 2 tuple of values - (a NxD feature matrix, a Nx1 response vector)</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bss.mvn">
+<span id="bss-mvn-module"></span><h2>bss.mvn module<a class="headerlink" href="#module-bss.mvn" title="Permalink to this headline">¶</a></h2>
+<p>A multivariate normal module inspired by the scipy.stats._multivariate module.</p>
+<dl class="class">
+<dt id="bss.mvn.Mvn">
+<em class="property">class </em><code class="descclassname">bss.mvn.</code><code class="descname">Mvn</code><span class="sig-paren">(</span><em>mean=None</em>, <em>cov=None</em>, <em>min_eigenval=None</em>, <em>jitter=None</em>, <em>check_finite=True</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.mvn.Mvn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>A multivariate normal random variable.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>mean</strong> : ndarray, optional</p>
+<blockquote>
+<div><p>The dx1 mean vector of the normal distribution. Assumed 0 if not specified.</p>
+</div></blockquote>
+<p><strong>cov</strong> : ndarray</p>
+<blockquote>
+<div><p>The dxd covariance matrix. Assumed the Identity matrix if not specified.</p>
+</div></blockquote>
+<p><strong>min_eigenval</strong> : float, optional</p>
+<blockquote>
+<div><p>The minimum eigenvalue of the covariance matrix we’re willing to accept. All values below this threshold
+are set to this value. If None (the default), no eignvalues are adjusted.
+A useful value is 0, which results in the covariance matrix being made positive definite.</p>
+</div></blockquote>
+<p><strong>jitter: float, optional</strong></p>
+<blockquote class="last">
+<div><p>A small amount of noise to add to the diagonals of the covariance matrix to make the covariance matrix
+invertible. If None (the default), then no jitter is applied.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+<dl class="attribute">
+<dt id="bss.mvn.Mvn.chol">
+<code class="descname">chol</code><a class="headerlink" href="#bss.mvn.Mvn.chol" title="Permalink to this definition">¶</a></dt>
+<dd><p>ndarray: The Cholesky decomposition of the covariance matrix of this distribution. Computed after the covariance
+matrix is made positive definite inside the constructor.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bss.mvn.Mvn.dot">
+<code class="descname">dot</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.mvn.Mvn.dot" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Complete writeup</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x</strong> : ndarray</p>
+<blockquote>
+<div><p>The dx1 vector for that we wish to transform, or more generally, the dxN data matrix that wish to transform</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ndarray</p>
+<blockquote class="last">
+<div><p>The dx1 transformed vector, or more generally, the dxN transformed data matrix</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>For a detailed explanation of why this may be useful, see <a class="reference internal" href="index.html#murray2010b" id="id1">[MA10]</a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bss.mvn.Mvn.logpdf">
+<code class="descname">logpdf</code><span class="sig-paren">(</span><em>x</em>, <em>precision_multiplier=1</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.mvn.Mvn.logpdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the Log Probability Density Function value of a given variate, optionally applying a multiplicative
+factor to the precision matrix (or equivalently, dividing the covariance matrix by a factor).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x</strong> : ndarray</p>
+<blockquote>
+<div><p>The vector for which we wish to calculate the log PDF value</p>
+</div></blockquote>
+<p><strong>precision_multiplier</strong> : float, optional</p>
+<blockquote>
+<div><p>Optional multiplier for the precision term in the covariance matrix, 1 by default.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">float</p>
+<blockquote class="last">
+<div><p>The Log PDF value of the vector x</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bss.mvn.Mvn.maha">
+<code class="descname">maha</code><span class="sig-paren">(</span><em>x</em>, <em>precision_multiplier=1</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.mvn.Mvn.maha" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the Mahalanobis distance between a given vector x and the mean of this distribution, optionally
+applying a multiplicative factor to the precision matrix (or equivalently, dividing the covariance matrix by a
+factor).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x</strong> : ndarray</p>
+<blockquote>
+<div><p>The vector for which we wish to calculate the distance</p>
+</div></blockquote>
+<p><strong>precision_multiplier</strong> : float, optional</p>
+<blockquote>
+<div><p>Optional multiplier for the precision term in the covariance matrix, 1 by default.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">float</p>
+<blockquote class="last">
+<div><p>A scalar distance value between x and the mean of this distribution</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bss.mvn.Mvn.rvs">
+<code class="descname">rvs</code><span class="sig-paren">(</span><em>precision_multiplier=1</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.mvn.Mvn.rvs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a random variate for this normal distribution, optionally applying a multiplicative factor to the
+precision matrix (or equivalently, dividing the covariance matrix by a factor).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>precision_multiplier</strong> : float, optional</p>
+<blockquote>
+<div><p>Optional multiplier for the precision term in the covariance matrix, 1 by default.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ndarray</p>
+<blockquote class="last">
+<div><p>A single Nx1 random variate from this normal distribution</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="bss.mvn.Mvn.whiten">
+<code class="descname">whiten</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.mvn.Mvn.whiten" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform the dx1 random variate x into a whitened random vector with unit diagonal covariance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>x</strong> : ndarray</p>
+<blockquote>
+<div><p>The dx1 vector for that we wish to whiten, or more generally, the dxN data matrix that wish to whiten</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ndarray</p>
+<blockquote class="last">
+<div><p>The dx1 whitened vector, or more generally, the dxN whitened data matrix</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>For a detailed explanation of why this may be useful, see <a class="reference internal" href="index.html#murray2010b" id="id2">[MA10]</a></p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-bss">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bss" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bss.setup_logging">
+<code class="descclassname">bss.</code><code class="descname">setup_logging</code><span class="sig-paren">(</span><em>path='logging.yml'</em><span class="sig-paren">)</span><a class="headerlink" href="#bss.setup_logging" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="bss.models.html" class="btn btn-neutral float-right" title="bss.models package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="modules.html" class="btn btn-neutral" title="bss" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Princeton University.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.0.2',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>
