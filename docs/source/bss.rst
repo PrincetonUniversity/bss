@@ -8,7 +8,26 @@ Subpackages
 
     bss.models
     bss.samplers
-    bss.utils
+
+Submodules
+----------
+
+bss\.data module
+----------------
+
+.. automodule:: bss.data
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+bss\.mvn module
+---------------
+
+.. automodule:: bss.mvn
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

@@ -9,20 +9,20 @@ import scipy.linalg
 _LOG_2PI = np.log(2 * np.pi)
 
 
-class Mvn(object):
+class Mvn:
     """A multivariate normal random variable.
 
     Parameters
     ----------
-    mean : `ndarray`, optional
-       The mean of the normal distribution. Assumed 0 if not specified.
-    cov : `ndarray`
-       The covariance matrix. Assumed the Identity matrix if not specified.
-    min_eigenval : `float`, optional
+    mean : ndarray, optional
+       The dx1 mean vector of the normal distribution. Assumed 0 if not specified.
+    cov : ndarray
+       The dxd covariance matrix. Assumed the Identity matrix if not specified.
+    min_eigenval : float, optional
        The minimum eigenvalue of the covariance matrix we're willing to accept. All values below this threshold
        are set to this value. If None (the default), no eignvalues are adjusted.
        A useful value is 0, which results in the covariance matrix being made positive definite.
-    jitter: `float`, optional
+    jitter: float, optional
         A small amount of noise to add to the diagonals of the covariance matrix to make the covariance matrix
         invertible. If None (the default), then no jitter is applied.
     """
@@ -52,11 +52,15 @@ class Mvn(object):
 
     @property
     def chol(self):
+        """ndarray: The Cholesky decomposition of the covariance matrix of this distribution. Computed after the covariance
+            matrix is made positive definite inside the constructor.
+        """
         return self.cov_info.chol
 
     def rvs(self, precision_multiplier=1):
         """
-        Generate a random variate for this normal distribution.
+        Generate a random variate for this normal distribution, optionally applying a multiplicative factor to the
+        precision matrix (or equivalently, dividing the covariance matrix by a factor).
 
         Parameters
         ----------
@@ -72,7 +76,9 @@ class Mvn(object):
 
     def maha(self, x, precision_multiplier=1):
         """
-        Calculate the Mahalanobis distance between a given vector x and the mean of this distribution
+        Calculate the Mahalanobis distance between a given vector x and the mean of this distribution, optionally
+        applying a multiplicative factor to the precision matrix (or equivalently, dividing the covariance matrix by a
+        factor).
 
         Parameters
         ----------
@@ -92,7 +98,8 @@ class Mvn(object):
 
     def logpdf(self, x, precision_multiplier=1):
         """
-        Calculate the Log Probability Density Function value of a given variate
+        Calculate the Log Probability Density Function value of a given variate, optionally applying a multiplicative
+        factor to the precision matrix (or equivalently, dividing the covariance matrix by a factor).
 
         Parameters
         ----------
@@ -109,16 +116,48 @@ class Mvn(object):
         maha = self.maha(x, precision_multiplier)
         return -0.5 * (self.d * (_LOG_2PI - np.log(precision_multiplier)) + self.cov_info.log_pdet + maha)
 
-    def solve(self, x):
-        # TODO: Verify math
-        return scipy.linalg.solve_triangular(self.chol, x, lower=True, trans=0, check_finite=self.check_finite)
+    def whiten(self, x):
+        """
+        Transform the dx1 random variate x into a whitened random vector with unit diagonal covariance.
+
+        Parameters
+        ----------
+        x : ndarray
+            The dx1 vector for that we wish to whiten, or more generally, the dxN data matrix that wish to whiten
+
+        Returns
+        -------
+        ndarray
+            The dx1 whitened vector, or more generally, the dxN whitened data matrix
+
+        Notes
+        -----
+        For a detailed explanation of why this may be useful, see :cite:`Murray2010b`
+        """
+        return scipy.linalg.solve_triangular(self.chol, (x - self.mean).T, lower=True, trans=0, check_finite=self.check_finite)
 
     def dot(self, x):
-        # TODO: Verify math
+        """
+        TODO: Complete writeup
+
+        Parameters
+        ----------
+        x : ndarray
+            The dx1 vector for that we wish to transform, or more generally, the dxN data matrix that wish to transform
+
+        Returns
+        -------
+        ndarray
+            The dx1 transformed vector, or more generally, the dxN transformed data matrix
+
+        Notes
+        -----
+        For a detailed explanation of why this may be useful, see :cite:`Murray2010b`
+        """
         return np.dot(self.chol, x)
 
 
-class _PD(object):
+class _PD:
     """
     Compute coordinated functions of a symmetric positive definite matrix.
 

@@ -7,21 +7,26 @@ import numpy.random as npr
 logger = logging.getLogger(__name__)
 
 
-class SliceSampler(object):
+class SliceSampler:
     """
     Exponential-Expansion slice sampling as per :cite:`Neal2003`
 
-    :param x0: The current sample, scalar or d-dimensional
-    :param logprob: A function taking a single sample of the same shape as x0,
-        and returning the log-probability of that sample
-    :param w: estimate of the typical size of a slice
-    :param expand: Whether to expand the slice size, either by linear increments or a doubling process
-    :param max_steps_out: The max. no. of expansion steps to take, either in a single direction (when stepping out in
-        fixed-width increments), or the total max steps in both directions (when stepping out using doubling steps)
-    :param compwise: TODO
-    :param doubling_step: Whether to use the doubling procedure described to expand the slice size; Useful to expand
-        intervals faster than stepping out in fixed-width increments
-    :return:
+    Parameters
+    ----------
+    logprob : callable
+        A function taking a single sample (a dx1 ndarray), and returning the log-probability of that sample
+    w : float, optional
+        Estimate of the typical size of a slice
+    expand : bool, optional
+        Whether to expand the slice size, either by linear increments or a doubling process
+    max_steps_out : int, optional
+        The max. no. of expansion steps to take, either in a single direction (when stepping out in
+        fixed-width increments), or the total max steps in both directions (when stepping out using doubling steps).
+    compwise : bool, optional
+        TODO: Complete writeup
+    doubling_step : bool, optional
+        Whether to use the doubling procedure described to expand the slice size; Useful to expand intervals faster
+        than stepping out in fixed-width increments.
     """
 
     def __init__(self, logprob, w=1.0, expand=True, max_steps_out=1000, compwise=True, doubling_step=True):
@@ -33,17 +38,60 @@ class SliceSampler(object):
         self.doubling_step = doubling_step
 
     def start(self, x0=None):
+        """
+        Start the sampling process at a given point defined by x0
+
+        Parameters
+        ----------
+        x0 : ndarray, optional
+            The starting point of the sampling process, a dx1 vector
+
+        Returns
+        -------
+        iterable
+            A (never-ending) iterable of dx1 samples from slice-sampling
+        """
         x0 = x0 if x0 is not None else np.random.rand()
         return _SliceSamplerIterator(x0, self.logprob, self.w, self.expand, self.max_steps_out, self.compwise, self.doubling_step)
 
     def chain(self, x0=None, iters=100000, burn_in=50000):
+        """
+        Generate a fixed number of samples, for a given burn_in and no. of iterations
+
+        Parameters
+        ----------
+        x0 : ndarray, optional
+            The starting point of the sampling process, a dx1 vector
+        iters: int, optional
+            The no. of iterations of sampling to run, including the burn-in, if any.
+        burn_in: int, optional
+            The no. of samples to discard as burn-in samples.
+
+        Returns
+        -------
+        list
+            A list of iters-burn_in samples, each a dx1 numpy vector
+        """
         return list(itertools.islice(self.start(x0), burn_in, iters))
 
     def one(self, x0=None):
+        """
+        Generate a single sample, given the starting point of sampling.
+
+        Parameters
+        ----------
+        x0 : ndarray, optional
+            The starting point of the sampling process, a dx1 vector
+
+        Returns
+        -------
+        ndarray
+            A single sample, a dx1 vector
+        """
         return next(self.start(x0))
 
 
-class _SliceSamplerIterator(object):
+class _SliceSamplerIterator:
 
     def __init__(self, x0, logprob, w=1.0, expand=True, max_steps_out=1000, compwise=True, doubling_step=True):
 
@@ -182,6 +230,7 @@ class _SliceSamplerIterator(object):
             new_y = self.dir_logprob(x1, direction)
 
             # TODO: Should the additional 'acceptable' check be performed only if doubling_step = True ?
+            # acceptable = True if not self.doubling_step else self.acceptable(0, x1, y, L, R, direction)
             if new_y > y and self.acceptable(0, x1, y, L, R, direction):
                 break
             elif x1 < 0:

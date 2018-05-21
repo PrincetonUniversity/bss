@@ -2,12 +2,12 @@ from unittest import TestCase
 import numpy as np
 from scipy.stats import multivariate_normal
 
-from bss.utils.mvn import Mvn
+from bss.mvn import Mvn
 
 
 class MvnTestCase(TestCase):
     def setUp(self):
-        np.random.seed(12345)
+        pass
 
     def tearDown(self):
         pass
@@ -55,3 +55,24 @@ class MvnTestCase(TestCase):
         result = dist.logpdf(x)
 
         self.assertAlmostEqual(logpdf, result)
+
+    def test_decorrelate(self):
+        """
+        Generate some correlated samples, decorrelate them using the whitening transform in the Mvn class, and check
+        to make sure the correlation between the decorrelated variables is indeed the identity matrix.
+        """
+        dims = 3
+        samples = 10000
+        cov = np.array([
+            [3.412,  2.143, 2.531],
+            [2.143, 5.321,  0.531],
+            [2.531,  0.531,  2.316]
+        ])
+
+        data = np.random.multivariate_normal(mean=[0]*dims, cov=cov, size=samples)
+
+        mvn = Mvn(cov=cov)
+        decorrelated_data = mvn.whiten(data).T
+
+        cov = np.cov(decorrelated_data, rowvar=False)
+        self.assertTrue(np.allclose(cov, np.eye(dims), atol=0.1))

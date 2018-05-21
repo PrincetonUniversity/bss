@@ -17,7 +17,7 @@ class SliceTestCase(TestCase):
         # Log value of a univariate normal distribution with mean 0 and variance 1, at any point x
         def lognorm(x):
             y = norm.pdf(x)
-            return np.log(y) if y>0 else -np.inf
+            return np.log(y) if y > 0 else -np.inf
 
         sampler = SliceSampler(lognorm)
 

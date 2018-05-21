@@ -1,7 +1,7 @@
 import os.path
 from unittest import TestCase
 
-from bss.utils.data import load_xy_file, load_cor_file, load_data
+from bss.data import load_xy_file, load_cor_file, load_data
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'sample_data')
 

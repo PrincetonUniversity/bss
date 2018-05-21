@@ -1,5 +1,5 @@
 import argparse
-from bss.utils.data import load_data
+from bss.data import load_data
 from bss.models.probit import Probit
 
 
@@ -20,7 +20,7 @@ def main():
         Y=y,
         R=R
     )
-    model.run_mcmc(burnin=opts.burnin, iters=opts.iters)
+    model.run_mcmc(burn_in=opts.burnin, iters=opts.iters)
 
 
 if __name__ == '__main__':

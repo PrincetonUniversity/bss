@@ -16,6 +16,7 @@ class SliceTestCase(TestCase):
     def test_ess_trace(self):
 
         log_likelihood_dist = multivariate_normal([1, 0, 2, 0.1, -0.3], 2*np.eye(5))
+
         # Log value of a univariate normal distribution with mean 0 and variance 1, at any point x
         def log_likehood_func(x):
             return log_likelihood_dist.logpdf(x)

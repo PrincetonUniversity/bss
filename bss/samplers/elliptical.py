@@ -7,36 +7,78 @@ import numpy.random as npr
 logger = logging.getLogger(__name__)
 
 
-class EllipticalSliceSampler(object):
+class EllipticalSliceSampler:
     """
     Elliptical Slice Sampling algorithm as outlined in :cite:`Murray2010`.
 
-    :param current_state: A d-dimensional vector of latent variables, representing the current state,
-     drawn from a normal distribution represented by normal_dist
-    :param normal_dist: Object representing the normal distribution that current_state is sampled from.
-     This object needs to be able to supply a d-dimensional variate through an rvs() method.
-     The Mvn class provided in the bss module works for this purpose.
-    :param log_like_fn: Log Likelihood function that takes in a single argument, a d-dimensional vector representing
-     a state, and returns a scalar log-likelihood value
-    :return: The new state (d-dimensional) after the sampling step
+    Parameters
+    ----------
+    normal_dist : object
+        Object representing the normal distribution that current_state is sampled from. This object needs to be able to
+        supply a d-dimensional variate through an rvs() method.
+    log_like_fn : callable
+        Log Likelihood function that takes in a single argument, a d-dimensional vector representing
+        a state, and returns a scalar log-likelihood value
     """
-
     def __init__(self, normal_dist, log_like_fn):
         self.normal_dist = normal_dist
         self.log_like_fn = log_like_fn
 
     def start(self, x0=None):
+        """
+        Start the sampling process at a given point defined by x0
+
+        Parameters
+        ----------
+        x0 : ndarray, optional
+            The starting point of the sampling process, a dx1 vector
+
+        Returns
+        -------
+        iterable
+            A (never-ending) iterable of dx1 samples from slice-sampling
+        """
         x0 = x0 if x0 is not None else self.normal_dist.rvs()
         return _EllipticalSliceSamplerIterator(x0, self.normal_dist, self.log_like_fn)
 
     def chain(self, x0=None, iters=100000, burn_in=50000):
+        """
+        Generate a fixed number of samples, for a given burn_in and no. of iterations
+
+        Parameters
+        ----------
+        x0 : ndarray, optional
+            The starting point of the sampling process, a dx1 vector
+        iters: int, optional
+            The no. of iterations of sampling to run, including the burn-in, if any.
+        burn_in: int, optional
+            The no. of samples to discard as burn-in samples.
+
+        Returns
+        -------
+        list
+            A list of iters-burn_in samples, each a dx1 numpy vector
+        """
         return list(itertools.islice(self.start(x0), burn_in, iters))
 
     def one(self, x0=None):
+        """
+        Generate a single sample, given the starting point of sampling.
+
+        Parameters
+        ----------
+        x0 : ndarray, optional
+            The starting point of the sampling process, a dx1 vector
+
+        Returns
+        -------
+        ndarray
+            A single sample, a dx1 vector
+        """
         return next(self.start(x0))
 
 
-class _EllipticalSliceSamplerIterator(object):
+class _EllipticalSliceSamplerIterator:
 
     def __init__(self, x0, normal_dist, log_like_fn):
         self.current_state = x0

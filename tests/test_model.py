@@ -3,7 +3,7 @@ import numpy as np
 from unittest import TestCase
 
 from bss.models.probit import Probit
-from bss.utils.data import load_data
+from bss.data import load_data
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'sample_data')
 
@@ -20,32 +20,32 @@ class ModelTestCase(TestCase):
     def tearDown(self):
         pass
 
-    def test_model1(self):
+    def test_model(self):
+        model = Probit(
+            X=self.X,
+            Y=self.y,
+            R=self.R
+        )
+        trace = model.run_mcmc(burn_in=5, iters=10)
+        expected_trace = [
+            4613.3151614505305, 4700.0565201187101, 4651.464728613646, 4654.9619244943506, 4628.7974616871106,
+            4629.8682792805203, 4637.0845615021908, 4658.0776869396414, 4609.6594171963898, 4672.197914151111
+        ]
+        self.assertEqual(len(trace), len(expected_trace))
+        for x, y in zip(trace, expected_trace):
+            self.assertAlmostEqual(x, y, places=6)
+
+    def test_model_update_xi(self):
         model = Probit(
             X=self.X,
             Y=self.y,
             R=self.R,
             xi=None
         )
-        trace = model.run_mcmc(burnin=5, iters=10)
+        trace = model.run_mcmc(burn_in=5, iters=10)
         expected_trace = [
             -2712.1243232190068, -2816.0395965482576, -2827.3281565130937, -1582.3140750335701, -2805.4378869844559,
             -2837.8348894101946, -2864.5580147460505, -2484.2768900178071, -2382.4815505858278, -2796.0928580805762
-        ]
-        self.assertEqual(len(trace), len(expected_trace))
-        for x, y in zip(trace, expected_trace):
-            self.assertAlmostEqual(x, y, places=6)
-
-    def test_model2(self):
-        model = Probit(
-            X=self.X,
-            Y=self.y,
-            R=self.R
-        )
-        trace = model.run_mcmc(burnin=5, iters=10)
-        expected_trace = [
-            4613.3151614505305, 4700.0565201187101, 4651.464728613646, 4654.9619244943506, 4628.7974616871106,
-            4629.8682792805203, 4637.0845615021908, 4658.0776869396414, 4609.6594171963898, 4672.197914151111
         ]
         self.assertEqual(len(trace), len(expected_trace))
         for x, y in zip(trace, expected_trace):
@@ -58,7 +58,7 @@ class ModelTestCase(TestCase):
             R=self.R,
             xi=None
         )
-        detailed_trace = model.run_mcmc(burnin=5, iters=10, detailed=True)
+        detailed_trace = model.run_mcmc(burn_in=5, iters=10, detailed=True)
 
         expected = {
             'joint': [
@@ -90,58 +90,3 @@ class ModelTestCase(TestCase):
         for k, v in expected.items():
             for x, y in zip(detailed_trace[k], v):
                 self.assertAlmostEqual(x, y, places=6)
-    #
-    # def test_model_conditional(self):
-    #     import pickle
-    #     detailed_trace = pickle.loads(open('trace.txt', 'rb').read())
-    #
-    #     model = Probit(
-    #         X=self.X,
-    #         Y=self.y,
-    #         R=self.R,
-    #         xi=None
-    #     )
-    #
-    #     gamma0_trace = detailed_trace['gamma0']
-    #     lambda_trace = detailed_trace['lambda']
-    #     nu_trace = detailed_trace['nu']
-    #     xi_trace = detailed_trace['xi']
-    #     joint_trace = detailed_trace['joint']
-    #     likelihood_trace = detailed_trace['likelihood']
-    #
-    #     import pylab as pl
-    #     pl.figure(1)
-    #     pl.subplot(2,2,1)
-    #     pl.hist(gamma0_trace, 25, normed=1)
-    #     gx = np.linspace(-5, 5, 1000)
-    #     pl.plot(gx, np.exp(model._gamma0_distribution.logpdf(gx)))
-    #     pl.title('gamma0')
-    #
-    #     pl.subplot(2,2,2)
-    #     pl.hist(lambda_trace, 25, normed=1)
-    #     gx = np.linspace(0, 10, 1000)
-    #     pl.plot(gx, np.exp(model._lambda_distribution.logpdf(gx)))
-    #     pl.title('lambda')
-    #
-    #     pl.subplot(2,2,3)
-    #     pl.hist(nu_trace, 25, normed=1)
-    #     gx = np.linspace(0, 10, 1000)
-    #     pl.plot(gx, np.exp(model._nu_distribution.logpdf(gx)))
-    #     pl.title('nu')
-    #
-    #     pl.subplot(2,2,4)
-    #     pl.hist(xi_trace, 25, normed=1)
-    #     gx = np.linspace(0, 1, 1000)
-    #     pl.plot(gx, np.exp(model._xi_distribution.logpdf(gx)))
-    #     pl.title('xi')
-    #
-    #     pl.figure(2)
-    #     pl.subplot(2,1,1)
-    #     pl.plot(joint_trace)
-    #     pl.title('log posterior')
-    #
-    #     pl.subplot(2,1,2)
-    #     pl.plot(likelihood_trace)
-    #     pl.title('log marginal likelihood')
-    #
-    #     pl.show()
