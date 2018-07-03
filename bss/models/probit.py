@@ -431,11 +431,11 @@ class Probit:
                 return -np.inf
 
             try:
-                gamma = self.probit_distribution(xi).dot(whitened)
+                gamma = self.probit_distribution(xi).correlate(whitened)
             except np.linalg.linalg.LinAlgError:
                 return -np.inf
             else:
                 return self.log_marg_like(gamma, self.gamma0, self.lamb, self.nu) + self._xi_distribution.logpdf(xi)
 
         self.xi = SliceSampler(slice_fn).one(x0=self.xi)
-        self.gamma = self.probit_distribution(self.xi).dot(whitened)
+        self.gamma = self.probit_distribution(self.xi).correlate(whitened)

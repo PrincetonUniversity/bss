@@ -23,7 +23,8 @@ class SliceSampler:
         The max. no. of expansion steps to take, either in a single direction (when stepping out in
         fixed-width increments), or the total max steps in both directions (when stepping out using doubling steps).
     compwise : bool, optional
-        TODO: Complete writeup
+        Whether we're exploring the space component-wise by taking a step in each dimension (default behavior),
+        or if we take a single step in a random direction in each iteration of the sampling.
     doubling_step : bool, optional
         Whether to use the doubling procedure described to expand the slice size; Useful to expand intervals faster
         than stepping out in fixed-width increments.
@@ -92,6 +93,12 @@ class SliceSampler:
 
 
 class _SliceSamplerIterator:
+    """
+    An Iterator object for Slice-Sampling, created by specifying a starting point, and a callable returning
+    a log-probability value.
+
+    Used internally by the SliceSampler class.
+    """
 
     def __init__(self, x0, logprob, w=1.0, expand=True, max_steps_out=1000, compwise=True, doubling_step=True):
 
@@ -117,8 +124,10 @@ class _SliceSamplerIterator:
 
         if self.compwise:
             new_x = self.x0.copy()
+            # Create a randomized list of orthogonal directions we'll be exploring
             directions = np.eye(self.dims)
             npr.shuffle(directions)
+
             for direction in directions:
                 new_x = self.direction_slice(new_x, direction)
         else:
@@ -184,7 +193,9 @@ class _SliceSamplerIterator:
         R = self.w * npr.rand()
         L = R - self.w
 
-        # Log-Likelihood value at x0. TODO: Why the additional value??
+        # Log-Likelihood value at x0
+        # Note that the height of the slice, y = prob(x0) * npr.rand()
+        # In the log-probability space that we're dealing with, this translates to:
         y = self.logprob(x0) + np.log(npr.rand())
 
         # The no. of "step-out" steps we've taken in the lower and upper directions
@@ -229,9 +240,9 @@ class _SliceSamplerIterator:
             x1 = L + npr.rand() * (R - L)
             new_y = self.dir_logprob(x1, direction)
 
-            # TODO: Should the additional 'acceptable' check be performed only if doubling_step = True ?
-            # acceptable = True if not self.doubling_step else self.acceptable(0, x1, y, L, R, direction)
-            if new_y > y and self.acceptable(0, x1, y, L, R, direction):
+            # Perform an additional 'acceptable' check if doubling_step was used.
+            acceptable = True if not self.doubling_step else self.acceptable(0, x1, y, L, R, direction)
+            if new_y > y and acceptable:
                 break
             elif x1 < 0:
                 L = x1

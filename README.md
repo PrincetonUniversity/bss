@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.com/PrincetonUniversity/bssr.svg?token=gFm1C2iKiRpokJuZp7Ab&branch=master)](https://travis-ci.com/PrincetonUniversity/bssr)
+[![Documentation Status](https://readthedocs.org/projects/bss/badge/?version=latest)](https://bss.readthedocs.io/en/latest/?badge=latest)
 
 # Bayesian Structured Sparsity from Gaussian Fields
 

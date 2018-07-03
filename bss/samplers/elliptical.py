@@ -79,7 +79,12 @@ class EllipticalSliceSampler:
 
 
 class _EllipticalSliceSamplerIterator:
+    """
+    An Iterator object for Elliptical Slice-Sampling, created by specifying a starting point, and a callable returning
+    a log-probability value.
 
+    Used internally by the EllipticalSliceSampler class.
+    """
     def __init__(self, x0, normal_dist, log_like_fn):
         self.current_state = x0
         self.normal_dist = normal_dist

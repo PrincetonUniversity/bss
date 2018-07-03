@@ -41,7 +41,6 @@ class Mvn:
         cov = np.array(cov)
 
         assert cov.ndim == 2, "Covariance matrix not 2D"
-        assert cov.ndim == 2, "Covariance matrix not 2D"
         assert cov.shape[0] == cov.shape[1], "Covariance matrix not square"
         assert mean.shape[0] == cov.shape[0], "Mean vector and covariance matrices not expected shape"
 
@@ -52,8 +51,8 @@ class Mvn:
 
     @property
     def chol(self):
-        """ndarray: The Cholesky decomposition of the covariance matrix of this distribution. Computed after the covariance
-            matrix is made positive definite inside the constructor.
+        """ndarray: The Cholesky decomposition of the covariance matrix of this distribution. Computed after the
+        covariance matrix is made positive definite inside the constructor.
         """
         return self.cov_info.chol
 
@@ -136,9 +135,11 @@ class Mvn:
         """
         return scipy.linalg.solve_triangular(self.chol, (x - self.mean).T, lower=True, trans=0, check_finite=self.check_finite)
 
-    def dot(self, x):
+    def correlate(self, x):
         """
-        TODO: Complete writeup
+        Transform a random variate x into a variate correlated according to this Multivariate normal distribution,
+        and centered around this distribution's mean.
+        This is accomplished by affine transforming the given data vector or data matrix.
 
         Parameters
         ----------
@@ -152,9 +153,19 @@ class Mvn:
 
         Notes
         -----
+        Uncorrelated random variables normally distributed with mean 0 and variance 1
+            Z ~ N(0, I)
+        can be transformed to correlated random variables X with mean A and covariance Sigma:
+            X ~ N(A, Sigma)
+        by selecting an affine transform:
+            X = A + BZ
+        where:
+            B B' = Sigma
+        We choose B to be the Cholesky factorization, since we have computed it for this class.
+
         For a detailed explanation of why this may be useful, see :cite:`Murray2010b`
         """
-        return np.dot(self.chol, x)
+        return np.dot(self.chol, x.T).T + self.mean
 
 
 class _PD:

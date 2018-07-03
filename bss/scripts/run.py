@@ -24,4 +24,11 @@ def main():
 
 
 if __name__ == '__main__':
+    """
+    Run the BSS Probit model on a given set of data files, with specified burn-in and iterations.
+    
+    To give this script a test run, use something like:
+    cd </path/to/folder/containing/bss/package>
+    python bss.scripts.run --file_pattern tests/sample_data/real0* --iters 10 --burnin 5
+    """
     main()
