@@ -9,6 +9,10 @@ Companion code for the paper
 
 Barbara E. Engelhardt, Ryan P. Adams
 
+Code documentation available at:
+
+[https://bss.readthedocs.io](https://bss.readthedocs.io)
+
 Abstract:
 
 Substantial research on structured sparsity has contributed to analysis of many different applications.
